@@ -1,0 +1,12 @@
+node_modules/
+target/
+dist/
+.gradle/
+build/
+.idea/
+*.iml
+local.properties
+.env
+.env.*
+!.env.example
+*.log
