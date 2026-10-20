@@ -1,0 +1,5 @@
+### 查询已有设备
+GET http://localhost:8080/device/dev_5037fd1b-9be3-4d14-87e8-7d3a339237db
+
+### 查询不存在的设备
+GET http://localhost:8080/device/dev_not-exist

@@ -59,4 +59,18 @@ public interface DeviceMapper {
             @Param("deviceId")
             String deviceId
     );
+
+    /**
+     * 设备ID查询设备
+     * 用途：查询设备详情
+     */
+    @Select("""
+            select device_id, device_name, model, os, os_version, status, create_time
+            from device
+            where device_id = #{deviceId}
+            """)
+    Device findByDeviceId(
+            @Param("deviceId")
+            String deviceId
+    );
 }

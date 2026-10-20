@@ -1,5 +1,6 @@
 package com.personalmdm.mdmserver.device.controller;
 
+import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
@@ -48,6 +49,11 @@ public class DeviceController {
         return deviceService.register(request);
     }
 
+    /**
+     * 设备修改名称
+     * @param request 修改名称请求
+     * @param deviceId  修改名称的设备
+     */
     @PatchMapping("/{deviceId}/name")
     @ResponseStatus(HttpStatus.NO_CONTENT)  // 指定接口执行后返回 HTTP 204 状态码，表示请求成功处理，但没有响应正文。
     public void rename(
@@ -59,4 +65,18 @@ public class DeviceController {
     ){
         deviceService.rename(deviceId,request);
     }
+
+    /**
+     * 查询设备详情
+     * @param deviceId
+     * @return
+     */
+    @GetMapping("/{deviceId}")
+    public DeviceDetailResponse getDetail(
+            @PathVariable("deviceId")
+            String deviceId
+    ){
+        return deviceService.getDetail(deviceId);
+    }
+
 }

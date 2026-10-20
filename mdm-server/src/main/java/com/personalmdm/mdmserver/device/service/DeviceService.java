@@ -1,5 +1,6 @@
 package com.personalmdm.mdmserver.device.service;
 
+import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
@@ -124,5 +125,31 @@ public class DeviceService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在");
         }
 
+    }
+
+    /**
+     * 返回设备详情
+     * @param deviceId 设备ID
+     * @return  返回设备详情DTO
+     */
+    public DeviceDetailResponse getDetail(String deviceId){
+        // 使用deviceId查询设备
+        Device device = deviceMapper.findByDeviceId(deviceId);
+
+        // 如果设备不存在，则返回404
+        if(device == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在");
+        }
+
+        // 如果设备存在，则返回设备详情
+        return new DeviceDetailResponse(
+                device.getDeviceId(),
+                device.getDeviceName(),
+                device.getModel(),
+                device.getOs(),
+                device.getOsVersion(),
+                device.getStatus(),
+                device.getCreateTime()
+        );
     }
 }
