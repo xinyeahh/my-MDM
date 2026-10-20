@@ -1,0 +1,23 @@
+### 首次注册：设备指纹有效
+POST http://localhost:8080/device/register
+Content-Type: application/json
+
+{
+  "deviceName": "学习用模拟设备",
+  "model": "simulator-v1",
+  "os": "Android",
+  "osVersion": "15",
+  "fingerprint": "sim-install-001"
+}
+
+### 首次注册：设备指纹无效
+POST http://localhost:8080/device/register
+Content-Type: application/json
+
+{
+  "deviceName": "学习用模拟设备",
+  "model": "simulator-v1",
+  "os": "Android",
+  "osVersion": "15",
+  "fingerprint": " "
+}
