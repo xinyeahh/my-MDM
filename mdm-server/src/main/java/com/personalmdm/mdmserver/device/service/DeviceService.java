@@ -2,10 +2,13 @@ package com.personalmdm.mdmserver.device.service;
 
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
+import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -100,5 +103,26 @@ public class DeviceService {
 
         // 注册成功，返回设备ID
         return new DeviceRegisterResponse(device.getDeviceId());
+    }
+
+    /**
+     * 修改设备名称
+     * @param deviceId 目标设备ID
+     * @param request  目标设备名称
+     */
+    public void rename(String deviceId, DeviceRenameRequest request){
+        /**
+         * update操作本身就具有原子性；device_id具有唯一性约束
+         * 因此，使用条件update可以直接避免“先查后更新”两个操作的间隔期间可能发生的设备删除情况
+         * 同时也减少了一次数据库操作
+         */
+        // 如果设备存在，且名称改变，则更新设备名称
+        int row = deviceMapper.updateName(request.getDeviceName(), deviceId);
+
+        // 应对“查询后被删除”的情况，返回404
+        if(row==0){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在");
+        }
+
     }
 }

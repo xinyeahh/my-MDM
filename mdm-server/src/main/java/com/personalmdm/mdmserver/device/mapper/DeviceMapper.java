@@ -1,11 +1,7 @@
 package com.personalmdm.mdmserver.device.mapper;
 
 import com.personalmdm.mdmserver.device.entity.Device;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.*;
 
 /**
  * Mapper：负责执行数据库操作的接口
@@ -15,7 +11,8 @@ import org.apache.ibatis.annotations.Options;
 public interface DeviceMapper {
 
     /**
-     * 查询设备指纹，验证设备是否已注册成功
+     * 设备指纹查询设备
+     * 用途：验证设备是否已注册成功（实现注册幂等性）
          * @Param("fingerprint")	为方法参数指定 SQL 中使用的名字
          * #{fingerprint}	使用参数绑定，把传入值作为数据交给数据库
      */
@@ -25,7 +22,8 @@ public interface DeviceMapper {
             where fingerprint = #{fingerprint}  
             """)
     Device findByFingerprint(
-            @Param("fingerprint") String fingerprint
+            @Param("fingerprint")
+            String fingerprint
     );
 
     /**
@@ -45,4 +43,20 @@ public interface DeviceMapper {
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")   //
     int insert(Device device);
+
+    /**
+     * 修改设备名称
+     * 返回的是匹配行数，而不是实际修改行数
+     */
+    @Update("""
+            update device
+            set device_name = #{deviceName}
+            where device_id = #{deviceId}
+            """)
+    int updateName(
+            @Param("deviceName")
+            String deviceName,
+            @Param("deviceId")
+            String deviceId
+    );
 }

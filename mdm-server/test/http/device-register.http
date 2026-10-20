@@ -21,3 +21,19 @@ Content-Type: application/json
   "osVersion": "15",
   "fingerprint": " "
 }
+
+### 修改已有设备的名称
+PATCH http://localhost:8080/device/dev_5037fd1b-9be3-4d14-87e8-7d3a339237db/name
+Content-Type: application/json
+
+{
+  "deviceName": "一个新名字"
+}
+
+### 修改不存在设备的名称
+PATCH http://localhost:8080/device/dev/name
+Content-Type: application/json
+
+{
+  "deviceName": "一个新名字"
+}

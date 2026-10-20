@@ -2,12 +2,11 @@ package com.personalmdm.mdmserver.device.controller;
 
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
+import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @RestController：将类声明为处理 HTTP 请求的控制器，返回对象会被序列化为响应数据
@@ -35,6 +34,11 @@ public class DeviceController {
         this.deviceService = deviceService;
     }
 
+    /**
+     * 设备注册
+     * @param request
+     * @return
+     */
     @PostMapping("/register")   // 接收 POST /device/register
     public DeviceRegisterResponse register(
             @Valid          // 触发 DTO 中的 @NotBlank、@Size 校验
@@ -42,5 +46,17 @@ public class DeviceController {
             DeviceRegisterRequest request
     ){
         return deviceService.register(request);
+    }
+
+    @PatchMapping("/{deviceId}/name")
+    @ResponseStatus(HttpStatus.NO_CONTENT)  // 指定接口执行后返回 HTTP 204 状态码，表示请求成功处理，但没有响应正文。
+    public void rename(
+            @Valid
+            @RequestBody
+            DeviceRenameRequest request,
+            @PathVariable("deviceId")   // 把路径中的设备 ID 传给方法参数
+            String deviceId
+    ){
+        deviceService.rename(deviceId,request);
     }
 }
