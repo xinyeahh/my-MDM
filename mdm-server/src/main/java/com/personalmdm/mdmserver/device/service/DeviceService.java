@@ -158,7 +158,7 @@ public class DeviceService {
      * @param size  单词实际返回的条数
      * @return      设备列表页面响应 DTO
      */
-    public DeviceListPageResponse list(int page, int size){
+    public DeviceListPageResponse list(int page, int size, String os){
         // 参数合法性校验
         if(page < 1 || size < 1 || size > 100){
             throw new ResponseStatusException(
@@ -170,11 +170,27 @@ public class DeviceService {
         // 偏移量计算
         long offset = (page - 1L) * size;
 
+        /**
+         * 将空字符串和空格统一转换为null，表示不筛选
+         *
+         * 三元运算符语法：条件 ? 条件成立时的值 : 条件不成立时的值
+         * os.strip()：去除首尾空白后的字符串
+         * isEmpty() 通常用于判断字符串是否为空字符串 ""。但它不能判断 null，也不能判断字符串是否只包含空格
+         * Java 的 String 变量可以重新赋值，但是对象中的字符内容不能被修改
+         * 代码使用 os和normalizedOs两个变量，是为了保留原始输入os，给 normalizedOs 重新赋值，不会影响 os。只有变量声明为 final 时，才不能再次给这个变量赋值
+         */
+        String normalizedOs = os == null ? null : os.strip();
+        if (normalizedOs != null && normalizedOs.isEmpty()){
+            normalizedOs = null;
+        }
+
+        // 注意：分页总数和列表必须使用相同的筛选条件
+
         // 设备总数
-        long total = deviceMapper.countAll();
+        long total = deviceMapper.countAllByOs(normalizedOs);
 
         // 设备列表获取
-        List<Device> deviceList = deviceMapper.findPage(size, offset);
+        List<Device> deviceList = deviceMapper.findPageByOs(size, offset, normalizedOs);
 
         // 设备列表包装成 设备列表条目响应 DTO 列表
         List<DeviceListItemResponse> items = new ArrayList<>();

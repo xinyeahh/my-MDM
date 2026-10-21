@@ -1,5 +1,6 @@
 package com.personalmdm.mdmserver.device.mapper;
 
+import com.personalmdm.mdmserver.device.dto.DeviceListItemResponse;
 import com.personalmdm.mdmserver.device.entity.Device;
 import org.apache.ibatis.annotations.*;
 
@@ -101,5 +102,59 @@ public interface DeviceMapper {
             int size,
             @Param("offset")
             long offset
+    );
+
+    /**
+     * 查询设备总数
+     * 注意：分页总数和列表必须使用相同的筛选条件
+     * 查询条件：os
+     * 动态sql
+     * <script>	在注解中启用动态 SQL
+     * <if>	条件成立时加入内部 SQL
+     * <where>	内部有条件时才生成 WHERE
+     */
+    @Select("""
+            <script>
+            select count(*)
+            from device
+            <where>
+                 <if test="os != null">
+                    os = #{os}
+                 </if>
+            </where>
+            </script>
+            """)
+    long countAllByOs(
+            @Param("os")
+            String os
+    );
+
+    /**
+     * 页码查询设备列表
+     * 注意：分页总数和列表必须使用相同的筛选条件
+     * 查询条件：os
+     * 动态sql
+     */
+    @Select("""
+            <script>
+            select id, device_id, device_name, model, os, os_version, status, create_time
+            from device
+            <where>
+                <if test="os != null">
+                    os = #{os}
+                </if>
+            </where>
+            order by id desc
+            limit #{size}
+            offset #{offset}
+            </script>
+            """)
+    List<Device> findPageByOs(
+            @Param("size")
+            int size,
+            @Param("offset")
+            long offset,
+            @Param("os")
+            String os
     );
 }

@@ -87,9 +87,11 @@ public class DeviceController {
             @RequestParam(name = "page", defaultValue = "1")    // @RequestParam 读取 URL 中 ? 后的参数 GET /device?page=2&size=10
             int page,
             @RequestParam(name = "size", defaultValue = "10")
-            int size
+            int size,
+            @RequestParam(name = "os", required = false)    // required = false 表示参数可以省略，省略时这里收到 null。
+            String os
     ){
-        return deviceService.list(page, size);
+        return deviceService.list(page, size, os);
     }
 
 }
