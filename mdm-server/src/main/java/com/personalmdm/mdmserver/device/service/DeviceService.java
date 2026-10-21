@@ -1,9 +1,6 @@
 package com.personalmdm.mdmserver.device.service;
 
-import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
+import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import org.springframework.dao.DuplicateKeyException;
@@ -11,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,8 +38,8 @@ public class DeviceService {
     /**
      * 设备注册方法
      * 注册流程：查询 → 判断是否存在 → 创建对象 → 保存 → 返回身份
-     * @param request 设备注册请求DTO 即设备发送给服务器的内容：device_name, fingerprint, os, os_version, model
-     * @return 设备注册响应 DTO 即服务器返回给设备的内容：device_id
+     * @param request 设备注册请求DTO（即设备发送给服务器的内容）
+     * @return        设备注册响应 DTO（即服务器返回给设备的内容）
      */
     public DeviceRegisterResponse register(DeviceRegisterRequest request){
 
@@ -130,7 +129,7 @@ public class DeviceService {
     /**
      * 返回设备详情
      * @param deviceId 设备ID
-     * @return  返回设备详情DTO
+     * @return         设备详情响应 DTO
      */
     public DeviceDetailResponse getDetail(String deviceId){
         // 使用deviceId查询设备
@@ -151,5 +150,45 @@ public class DeviceService {
                 device.getStatus(),
                 device.getCreateTime()
         );
+    }
+
+    /**
+     * 返回设备列表
+     * @param page  页码
+     * @param size  单词实际返回的条数
+     * @return      设备列表页面响应 DTO
+     */
+    public DeviceListPageResponse list(int page, int size){
+        // 参数合法性校验
+        if(page < 1 || size < 1 || size > 100){
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page 必须至少为 1，size 必须在 1 到 100 之间"
+            );
+        }
+
+        // 偏移量计算
+        long offset = (page - 1L) * size;
+
+        // 设备总数
+        long total = deviceMapper.countAll();
+
+        // 设备列表获取
+        List<Device> deviceList = deviceMapper.findPage(size, offset);
+
+        // 设备列表包装成 设备列表条目响应 DTO 列表
+        List<DeviceListItemResponse> items = new ArrayList<>();
+        for(Device device : deviceList){
+            DeviceListItemResponse item = new DeviceListItemResponse(
+                    device.getDeviceId(),
+                    device.getDeviceName(),
+                    device.getModel(),
+                    device.getOs(),
+                    device.getStatus()
+            );
+            items.add(item);
+        }
+
+        return new DeviceListPageResponse(page, size, total, items);
     }
 }

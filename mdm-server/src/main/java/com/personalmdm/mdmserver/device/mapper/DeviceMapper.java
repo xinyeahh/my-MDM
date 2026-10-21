@@ -3,6 +3,8 @@ package com.personalmdm.mdmserver.device.mapper;
 import com.personalmdm.mdmserver.device.entity.Device;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 /**
  * Mapper：负责执行数据库操作的接口
  * 将这个接口标记为 MyBatis Mapper，由 MyBatis 提供实现
@@ -72,5 +74,32 @@ public interface DeviceMapper {
     Device findByDeviceId(
             @Param("deviceId")
             String deviceId
+    );
+
+    /**
+     * 查询设备总数
+     */
+    @Select("""
+            select count(*)
+            from device
+            """)
+    long countAll();
+
+
+    /**
+     * 页码查询设备列表
+     */
+    @Select("""
+            select id, device_id, device_name, model, os, os_version, status, create_time
+            from device
+            order by id desc
+            limit #{size}
+            offset #{offset}
+            """)
+    List<Device> findPage(
+            @Param("size")
+            int size,
+            @Param("offset")
+            long offset
     );
 }

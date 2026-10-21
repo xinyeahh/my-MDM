@@ -1,9 +1,6 @@
 package com.personalmdm.mdmserver.device.controller;
 
-import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
+import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -29,7 +26,7 @@ public class DeviceController {
     /**
      * 构造方法
      * 当 Spring 扫描到这个 Controller，并且容器中存在可注入的 DeviceService Bean 时，Spring 就可以调用这个构造器，把 Service 传进来。
-     * @param deviceService
+     * @param deviceService 服务
      */
     public DeviceController(DeviceService deviceService){
         this.deviceService = deviceService;
@@ -37,8 +34,8 @@ public class DeviceController {
 
     /**
      * 设备注册
-     * @param request
-     * @return
+     * @param request   设备注册请求 DTO
+     * @return          设备注册响应 DTO
      */
     @PostMapping("/register")   // 接收 POST /device/register
     public DeviceRegisterResponse register(
@@ -51,8 +48,8 @@ public class DeviceController {
 
     /**
      * 设备修改名称
-     * @param request 修改名称请求
-     * @param deviceId  修改名称的设备
+     * @param request   修改名称请求 DTO
+     * @param deviceId  设备 ID
      */
     @PatchMapping("/{deviceId}/name")
     @ResponseStatus(HttpStatus.NO_CONTENT)  // 指定接口执行后返回 HTTP 204 状态码，表示请求成功处理，但没有响应正文。
@@ -68,8 +65,8 @@ public class DeviceController {
 
     /**
      * 查询设备详情
-     * @param deviceId
-     * @return
+     * @param deviceId 设备 ID
+     * @return         设备详情响应DTO
      */
     @GetMapping("/{deviceId}")
     public DeviceDetailResponse getDetail(
@@ -77,6 +74,22 @@ public class DeviceController {
             String deviceId
     ){
         return deviceService.getDetail(deviceId);
+    }
+
+    /**
+     *
+     * @param page  页码
+     * @param size  单次返回的设备数
+     * @return      设备列表页面响应 DTO
+     */
+    @GetMapping     // 没有子路径的 @GetMapping 与类上的 /device 组合，对应 GET /device
+    public DeviceListPageResponse list(
+            @RequestParam(name = "page", defaultValue = "1")    // @RequestParam 读取 URL 中 ? 后的参数 GET /device?page=2&size=10
+            int page,
+            @RequestParam(name = "size", defaultValue = "10")
+            int size
+    ){
+        return deviceService.list(page, size);
     }
 
 }
