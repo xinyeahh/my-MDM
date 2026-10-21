@@ -2,6 +2,7 @@ package com.personalmdm.mdmserver.device.service;
 
 import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
+import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -71,7 +72,7 @@ public class DeviceService {
         device.setOsVersion(request.getOsVersion());
 
         // 设备状态设置为激活
-        device.setStatus("ACTIVE");
+        device.setStatus(DeviceStatus.ACTIVE);
 
         /**
          * 设备注册的并发异常处理
@@ -147,7 +148,7 @@ public class DeviceService {
                 device.getModel(),
                 device.getOs(),
                 device.getOsVersion(),
-                device.getStatus(),
+                device.getStatus().name(),
                 device.getCreateTime()
         );
     }
@@ -200,7 +201,7 @@ public class DeviceService {
                     device.getDeviceName(),
                     device.getModel(),
                     device.getOs(),
-                    device.getStatus()
+                    device.getStatus().name()
             );
             items.add(item);
         }

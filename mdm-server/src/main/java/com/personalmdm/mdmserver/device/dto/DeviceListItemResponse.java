@@ -1,5 +1,7 @@
 package com.personalmdm.mdmserver.device.dto;
 
+import com.personalmdm.mdmserver.device.entity.DeviceStatus;
+
 /**
  * 设备列表条目响应DTO
  * 列表只展示概要，详细字段仍然通过详情接口获取。

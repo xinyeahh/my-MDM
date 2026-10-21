@@ -1,5 +1,7 @@
 package com.personalmdm.mdmserver.device.dto;
 
+import com.personalmdm.mdmserver.device.entity.DeviceStatus;
+
 import java.time.LocalDateTime;
 
 /**

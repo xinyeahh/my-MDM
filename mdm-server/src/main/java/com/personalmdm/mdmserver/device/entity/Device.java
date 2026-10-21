@@ -1,7 +1,5 @@
 package com.personalmdm.mdmserver.device.entity;
 
-import org.apache.ibatis.annotations.Mapper;
-
 import java.time.LocalDateTime;
 
 /**
@@ -50,7 +48,7 @@ public class Device {
     /**
      * 设备状态
      */
-    private String status;
+    private DeviceStatus status;
 
     /**
      * 创建时间
@@ -115,11 +113,11 @@ public class Device {
         this.osVersion = osVersion;
     }
 
-    public String getStatus() {
+    public DeviceStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(DeviceStatus status) {
         this.status = status;
     }
 
