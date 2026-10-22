@@ -157,4 +157,18 @@ public interface DeviceMapper {
             @Param("os")
             String os
     );
+
+    /**
+     * 撤销设备
+     * 状态转换：激活->撤销
+     */
+    @Update("""
+            update device
+            set status = 'REVOKE'
+            where device_id = #{deviceId}
+            """)
+    int revoke(
+            @Param("deviceId")
+            String deviceId
+    );
 }

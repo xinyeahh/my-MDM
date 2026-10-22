@@ -208,4 +208,20 @@ public class DeviceService {
 
         return new DeviceListPageResponse(page, size, total, items);
     }
+
+    /**
+     * 撤销设备
+     * 状态转换：激活->撤销
+     * @param deviceId 设备ID
+     */
+    public void revoke(String deviceId){
+
+        // 根据更新语句返回的匹配结果判定是否更新成功
+        int row = deviceMapper.revoke(deviceId);
+
+        // 设备不存在时，更新语句匹配结果为0
+        if(row == 0){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在");
+        }
+    }
 }

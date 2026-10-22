@@ -77,9 +77,10 @@ public class DeviceController {
     }
 
     /**
-     *
+     * 分页查询设备列表
      * @param page  页码
      * @param size  单次返回的设备数
+     * @param os    查询条件：操作系统
      * @return      设备列表页面响应 DTO
      */
     @GetMapping     // 没有子路径的 @GetMapping 与类上的 /device 组合，对应 GET /device
@@ -92,6 +93,20 @@ public class DeviceController {
             String os
     ){
         return deviceService.list(page, size, os);
+    }
+
+    /**
+     * 设备撤销
+     * 撤销成功返回 204
+     * @param deviceId 设备ID
+     */
+    @PostMapping("/{deviceId}/revoke")
+    @ResponseStatus(HttpStatus.NO_CONTENT)      // 设备撤销成功时，返回204
+    public void revoke(
+            @PathVariable("deviceId")
+            String deviceId
+    ){
+        deviceService.revoke(deviceId);
     }
 
 }
