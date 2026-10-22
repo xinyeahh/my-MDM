@@ -3,6 +3,7 @@ package com.personalmdm.mdmserver.device.service;
 
 // 测试所需的类
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
+import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
@@ -175,4 +176,40 @@ class DeviceServiceTest {
         ).findByFingerprint("install-test");
         verify(deviceMapper).insert(any(Device.class));
     }
+
+    /**
+     * 已激活设备重复注册，返回原来的 deviceId，并且不插入新记录。
+     * 准备：Mapper 返回 ACTIVE 设备
+     * 执行：调用 register()
+     * 检查：返回原 ID，未调用 insert()
+     */
+    @Test
+    void activeDeviceRegisterAgainWithSameId(){
+        // 准备：模拟数据库中已存在的一个设备
+        Device existing = new Device();
+        existing.setDeviceId("dev_existing");
+        existing.setStatus(DeviceStatus.ACTIVE);
+
+        // 准备：设备注册请求
+        DeviceRegisterRequest request = new DeviceRegisterRequest();
+        request.setFingerprint("install-active");
+
+        // 准备：预设查询结果
+        when(deviceMapper.findByFingerprint("install-active")).thenReturn(existing);
+
+        // 准备：构造注入mapper
+        DeviceService deviceService = new DeviceService(deviceMapper);
+
+        // 执行：调用注册方法，保存返回的响应 DTO
+        DeviceRegisterResponse response = deviceService.register(request);
+
+        // 验证重复注册返回已有身份
+        assertEquals("dev_existing", response.deviceId());
+
+        // 验证重复注册返回已有身份。
+        verify(deviceMapper, never()).insert(any(Device.class));
+
+    }
 }
+
+
