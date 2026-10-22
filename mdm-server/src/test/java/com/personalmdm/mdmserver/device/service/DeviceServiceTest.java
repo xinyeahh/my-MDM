@@ -43,6 +43,7 @@ class DeviceServiceTest {
     private DeviceMapper deviceMapper;
 
     /**
+     * 注册
      * 撤销设备不允许重新注册
      * @Test 表示这是一个可以由JUnit执行的测试方法
      * 方法名采用行为描述式命名，表达了一个业务规则
@@ -137,6 +138,7 @@ class DeviceServiceTest {
     }
 
     /**
+     * 注册
      * 并发冲突后的分支也会拒绝已撤销设备
      */
     @Test
@@ -178,6 +180,7 @@ class DeviceServiceTest {
     }
 
     /**
+     * 注册
      * 已激活设备重复注册，返回原来的 deviceId，并且不插入新记录。
      * 准备：Mapper 返回 ACTIVE 设备
      * 执行：调用 register()
@@ -211,6 +214,7 @@ class DeviceServiceTest {
     }
 
     /**
+     * 注册
      * 首次注册成功
      * 查询指纹 → 不存在 → 创建设备 → 插入 → 返回新 deviceId
      */
@@ -256,6 +260,7 @@ class DeviceServiceTest {
     }
 
     /**
+     * 注册
      * 插入发生唯一键冲突，但再次按指纹查询仍找不到设备时，应该保留原异常。
      * 因为冲突也可能来自device_id，不能把所有唯一键冲突都当成“重复设备注册成功”。
      */
@@ -294,6 +299,7 @@ class DeviceServiceTest {
     }
 
     /**
+     * 注册
      * 插入发生冲突后，查到了已激活设备，应返回已有身份
      */
     @Test
@@ -325,6 +331,30 @@ class DeviceServiceTest {
         verify(deviceMapper, times(1)).insert(any(Device.class));
     }
 
+    /**
+     * 撤销
+     * 撤销不存在的设备，应该抛出携带 404 的异常。
+     */
+    @Test
+    void revokingMissingDeviceReturnsNotFound() {
+        // 1. 模拟 revoke("dev_missing") 返回 0
+        when(deviceMapper.revoke("dev_missing")).thenReturn(0);
+
+        DeviceService service = new DeviceService(deviceMapper);
+
+        // 2. 使用 assertThrows 调用 service.revoke("dev_missing")
+        //    并保存返回的异常
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.revoke("dev_missing")
+        );
+
+        // 3. 断言异常中的状态为 HttpStatus.NOT_FOUND
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        // 4. 验证 Mapper 的 revoke("dev_missing") 被调用一次.确认调用一次，且传入的是正确设备 ID
+        verify(deviceMapper, times(1)).revoke("dev_missing");
+    }
 }
 
 
