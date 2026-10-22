@@ -355,6 +355,25 @@ class DeviceServiceTest {
         // 4. 验证 Mapper 的 revoke("dev_missing") 被调用一次.确认调用一次，且传入的是正确设备 ID
         verify(deviceMapper, times(1)).revoke("dev_missing");
     }
+
+    /**
+     * 撤销
+     * 设备存在，撤销成功
+     */
+    @Test
+    void revokingExistingDeviceSucceeds() {
+        // 1. 模拟 revoke("dev_existing") 返回 1
+        when(deviceMapper.revoke("dev_existing")).thenReturn(1);
+
+        // 2. 创建 Service
+        DeviceService deviceService = new DeviceService(deviceMapper);
+
+        // 3. 用 assertDoesNotThrow 验证撤销方法正常结束
+        assertDoesNotThrow(() -> deviceService.revoke("dev_existing"));
+
+        // 4. 验证 Mapper 收到正确的设备 ID
+        verify(deviceMapper).revoke("dev_existing");
+    }
 }
 
 
