@@ -9,6 +9,7 @@ import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
@@ -16,8 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 // 静态导入：允许直接使用方法，不用每次都写完整的类名
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -208,7 +208,51 @@ class DeviceServiceTest {
 
         // 验证重复注册返回已有身份。
         verify(deviceMapper, never()).insert(any(Device.class));
+    }
 
+    /**
+     * 首次注册成功
+     * 查询指纹 → 不存在 → 创建设备 → 插入 → 返回新 deviceId
+     */
+    @Test
+    void newDeviceRegistersSuccessfully(){
+        // 准备：新设备注册请求
+        DeviceRegisterRequest request = new DeviceRegisterRequest();
+        request.setFingerprint("install-new");
+        request.setDeviceName("测试设备");
+        request.setModel("simulator-v1");
+        request.setOs("Android");
+        request.setOsVersion("15");
+
+        // 准备：预设查询结果
+        when(deviceMapper.findByFingerprint("install-new")).thenReturn(null);
+        when(deviceMapper.insert(any(Device.class))).thenReturn(1);
+
+        // 准备：构造注入
+        DeviceService deviceService = new DeviceService(deviceMapper);
+
+        // 执行
+        DeviceRegisterResponse response = deviceService.register(request);
+
+        // 捕获实际传给insert的对象
+        ArgumentCaptor<Device> captor = ArgumentCaptor.forClass(Device.class);
+
+        // 找到service调用insert()时传入的对象，取出它，再检查状态
+        verify(deviceMapper).insert(captor.capture());
+        Device saved = captor.getValue();   // saved 只是变量名；模拟 Mapper 没有真的把它写入数据库。
+
+        // 检查
+        assertEquals(DeviceStatus.ACTIVE, saved.getStatus());
+        assertEquals("install-new", saved.getFingerprint());
+        assertEquals("测试设备", saved.getDeviceName());
+        assertEquals("simulator-v1", saved.getModel());
+        assertEquals("Android", saved.getOs());
+        assertEquals("15", saved.getOsVersion());
+
+        // 因为设备id是随机生成的，所以这里只检查是否为空
+        assertNotNull(saved.getDeviceId());
+        assertTrue(saved.getDeviceId().startsWith("dev_"));
+        assertEquals(saved.getDeviceId(), response.deviceId());
     }
 }
 
