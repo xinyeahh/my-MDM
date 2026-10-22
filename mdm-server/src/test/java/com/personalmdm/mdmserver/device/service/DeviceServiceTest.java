@@ -292,6 +292,39 @@ class DeviceServiceTest {
                 times(2)    // 验证 findByFingerprint() 方法恰好被调用了两次
         ).findByFingerprint("install-conflict");
     }
+
+    /**
+     * 插入发生冲突后，查到了已激活设备，应返回已有身份
+     */
+    @Test
+    void activeDeviceFoundAfterDuplicateKeyReturnsExistingId(){
+        // 1. 准备已有设备：deviceId 为 dev_existing，状态为 ACTIVE
+        Device existing = new Device();
+        existing.setDeviceId("dev_existing");
+        existing.setStatus(DeviceStatus.ACTIVE);
+
+        // 2. 准备请求：fingerprint 为 install-race
+        DeviceRegisterRequest request = new DeviceRegisterRequest();
+        request.setFingerprint("install-race");
+
+        // 3. 模拟第一次查询返回 null，第二次返回已有设备
+        when(deviceMapper.findByFingerprint("install-race")).thenReturn(null,existing);
+
+        // 4. 模拟 insert 抛出 DuplicateKeyException
+        when(deviceMapper.insert(any(Device.class))).thenThrow(DuplicateKeyException.class);
+
+        // 5. 创建 Service，调用 register，取得响应
+        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceRegisterResponse response = deviceService.register(request);
+
+        // 6. 断言返回的 deviceId 为 dev_existing
+        assertEquals("dev_existing", response.deviceId());
+
+        // 7. 验证查询执行两次，插入尝试执行一次
+        verify(deviceMapper, times(2)).findByFingerprint("install-race");
+        verify(deviceMapper, times(1)).insert(any(Device.class));
+    }
+
 }
 
 
