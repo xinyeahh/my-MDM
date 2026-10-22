@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -132,5 +133,46 @@ class DeviceServiceTest {
         );
 
 
+    }
+
+    /**
+     * 并发冲突后的分支也会拒绝已撤销设备
+     */
+    @Test
+    void revokeDeviceFoundAfterDuplicateKeyCannotRegister(){
+        // 准备：模拟数据库中的一台设备
+        Device existing = new Device();
+        existing.setDeviceId("dev_test");
+        existing.setStatus(DeviceStatus.REVOKE);
+
+        // 准备：注册请求
+        DeviceRegisterRequest request = new DeviceRegisterRequest();
+        request.setFingerprint("install-test");
+
+        // 准备：预设查询结果
+        // 第一次查询没有记录，成功注册
+        // 表示同一个查询方法第一次调用返回 null，第二次调用返回 existing
+        when(deviceMapper.findByFingerprint("install-test")).thenReturn(null, existing);
+
+        // 尝试插入，发生唯一键冲突
+        when(deviceMapper.insert(any(Device.class))).thenThrow(new DuplicateKeyException("模拟唯一键冲突"));
+
+        // 准备：手动构造测试对象
+        DeviceService deviceService = new DeviceService(deviceMapper);
+
+        // 执行代码
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> deviceService.register(request)
+        );
+
+        // 检查结果
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        verify(
+                deviceMapper,
+                times(2)       // 执行两次查询
+        ).findByFingerprint("install-test");
+        verify(deviceMapper).insert(any(Device.class));
     }
 }
