@@ -1,17 +1,24 @@
 package com.personalmdm.mdmserver.device.controller;
 
+import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
+import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @WebMvcTest(DeviceController.class) // 加载Controller及相关MVC测试环境
 class DeviceControllerTest {
@@ -22,6 +29,11 @@ class DeviceControllerTest {
     @MockitoBean    // 在Spring测试环境中提供模拟Service
     private DeviceService deviceService;
 
+    /**
+     * 设备注册：参数违法-设备名称只由空格组成
+     *
+     * @throws Exception
+     */
     @Test
     void blankDeviceNameReturnsBadRequest() throws Exception {
         mockMvc.perform(
@@ -40,4 +52,44 @@ class DeviceControllerTest {
 
         verifyNoInteractions(deviceService);    // 检查Service完全没有被调用
     }
+
+    /**
+     * 设备注册：参数合法
+     */
+    @Test
+    void validRegistrationReturnsDeviceId() throws Exception{
+        when(deviceService.register(any(DeviceRegisterRequest.class))).thenReturn(new DeviceRegisterResponse("dev_test"));
+
+        mockMvc.perform(
+                post("/device/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "deviceName": "测试设备",
+                                    "model": "simulator-v1",
+                                    "os": "Android",
+                                    "osVersion": "15",
+                                    "fingerprint": "install-valid"
+                                }
+                                """)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deviceId")   // 表示读取响应 JSON 根对象中的 deviceId 字段。这里验证的是客户端实际收到的 JSON，而不是直接读取 Java 对象。
+                        .value("dev_test"));
+
+        // 捕获的是 Controller 传给 Service 的请求 DTO，用于检查 JSON 字段是否被正确解析。
+        ArgumentCaptor<DeviceRegisterRequest> captor = ArgumentCaptor.forClass(DeviceRegisterRequest.class);
+
+        verify(deviceService).register(captor.capture());
+
+        DeviceRegisterRequest request = captor.getValue();
+
+        assertEquals("测试设备", request.getDeviceName());
+        assertEquals("simulator-v1", request.getModel());
+        assertEquals("Android", request.getOs());
+        assertEquals("15", request.getOsVersion());
+        assertEquals("install-valid", request.getFingerprint());
+    }
+
+
 }
