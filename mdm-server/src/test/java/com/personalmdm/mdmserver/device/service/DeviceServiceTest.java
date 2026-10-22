@@ -172,7 +172,7 @@ class DeviceServiceTest {
 
         verify(
                 deviceMapper,
-                times(2)       // 执行两次查询
+                times(2)       // 验证查询执行了两次
         ).findByFingerprint("install-test");
         verify(deviceMapper).insert(any(Device.class));
     }
@@ -253,6 +253,44 @@ class DeviceServiceTest {
         assertNotNull(saved.getDeviceId());
         assertTrue(saved.getDeviceId().startsWith("dev_"));
         assertEquals(saved.getDeviceId(), response.deviceId());
+    }
+
+    /**
+     * 插入发生唯一键冲突，但再次按指纹查询仍找不到设备时，应该保留原异常。
+     * 因为冲突也可能来自device_id，不能把所有唯一键冲突都当成“重复设备注册成功”。
+     */
+    @Test
+    void duplicateKeyWithoutExistingDeviceRethrowOriginalException(){
+        // 准备：设备注册请求
+        DeviceRegisterRequest request = new DeviceRegisterRequest();
+        request.setFingerprint("install-conflict");
+
+        // 准备：预设查询结果为空
+        when(deviceMapper.findByFingerprint("install-conflict")).thenReturn(null);  // 该查询每次都返回 null
+
+        // 准备：模拟唯一键冲突
+        DuplicateKeyException oringinal = new DuplicateKeyException("模拟无法恢复的唯一键冲突");
+
+        // 准备：预设插入时抛出唯一键冲突
+        when(deviceMapper.insert(any(Device.class))).thenThrow(oringinal);
+
+        // 准备：注入构造
+        DeviceService deviceService = new DeviceService(deviceMapper);
+
+        // 执行：使用actual保存代码执行过程中捕获的唯一键冲突
+        DuplicateKeyException actual = assertThrows(DuplicateKeyException.class, () -> deviceService.register(request));
+
+        /**
+         * assertEquals 检查值是否相等
+         * assertSame 检查是否为同一个对象。
+         */
+        assertSame(oringinal,actual);   // 检查抛出的就是原来的那个异常对象，对应service中的 `throw e;`
+
+        // 验证是否执行两次查询
+        verify(
+                deviceMapper,
+                times(2)    // 验证 findByFingerprint() 方法恰好被调用了两次
+        ).findByFingerprint("install-conflict");
     }
 }
 
