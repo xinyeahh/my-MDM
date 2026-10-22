@@ -53,7 +53,7 @@ public class DeviceService {
              * 1. 创建一个响应 DTO 对象，把这个设备标识传给它的构造器
              * 2. 将响应对象返回给调用方，同时结束当前 register() 方法的执行
              */
-            return new DeviceRegisterResponse(existing.getDeviceId());
+            return buildRegisterResponse(existing);
         }
 
         // ===== 如果设备指纹并不存在于数据库中，则实现新设备注册 =====
@@ -84,14 +84,14 @@ public class DeviceService {
         try {
             // 将设备插入数据库，插入本身就是原子操作
             deviceMapper.insert(device);
-        }catch (DuplicateKeyException e){
+        }catch (DuplicateKeyException e){   // 捕获唯一键冲突
             // 查询同一个 fingerprint
             Device registered = deviceMapper.findByFingerprint(request.getFingerprint());
 
             // 判断是否已有注册身份
             if(registered != null){
                 // 已有注册身份，返回对应的设备ID
-                return new DeviceRegisterResponse(registered.getDeviceId());
+                return buildRegisterResponse(registered);
             }
 
             /**
@@ -103,6 +103,20 @@ public class DeviceService {
         }
 
         // 注册成功，返回设备ID
+        return new DeviceRegisterResponse(device.getDeviceId());
+    }
+
+    /**
+     * 构建设备注册响应 DTO
+     * 判断设备是否处于撤销状态，处于撤销状态的设备不允许重新注册或找回设备ID 即抛出 403 forbidden的响应
+     * @param device    设备实体
+     * @return          设备注册响应 DTO
+     */
+    private DeviceRegisterResponse buildRegisterResponse(Device device){
+        if(device.getStatus() == DeviceStatus.REVOKE){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "设备已撤销，不允许重新注册！");
+        }
+
         return new DeviceRegisterResponse(device.getDeviceId());
     }
 
