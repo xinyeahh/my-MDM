@@ -162,13 +162,17 @@ class DeviceControllerTest {
     }
 
     /**
-     * 设备重命名：设备新名称仅由空格组成，违法
+     * 设备重命名：测参数校验。使用空白名称，预期400
      * @throws Exception
      */
     @Test
     void invalidRenameReturnsForbidden () throws Exception {
         mockMvc.perform(
-                patch("/device/{deviceId}/name", "dev_existing")    // 路径中的{deviceId}需要替换值
+                /**
+                 * 路径中的{deviceId}需要替换值，这里传入 "dev_existing" 只是为了构造完整请求路径，不需要数据库中真的有这台设备
+                 * 因为参数校验会先拒绝请求，模拟 Service 不会被调用。
+                 */
+                patch("/device/{deviceId}/name", "dev_existing")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -178,5 +182,43 @@ class DeviceControllerTest {
         ).andExpect(status().isBadRequest());
 
         verifyNoInteractions(deviceService);
+    }
+
+    /**
+     * 设备改名：测设备不存在
+     * Service判断设备不存在，Controller返回404
+     * @throws Exception
+     */
+    @Test
+    void renamingMissingDeviceReturnsNotFound() throws Exception {
+        /**
+         * void 方法抛异常的写法：doThrow(异常).when(模拟对象).方法(参数);
+         *
+         * 因为 rename() 返回 void，无法把它作为值传给 when(...)。Mockito 因此提供了 doThrow(...).when(...) 这种写法。
+         */
+        doThrow(new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "设备不存在"
+        ))
+                .when(deviceService)
+                .rename(
+                        eq("dev_missing"),
+                        any(DeviceRenameRequest.class)
+                );
+
+        mockMvc.perform(
+                patch("/device/{deviceId}/name", "dev_missing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "deviceName": "新名称"
+                                }
+                                """)
+        ).andExpect(status().isNotFound());
+
+        verify(deviceService).rename(
+                eq("dev_missing"),
+                any(DeviceRenameRequest.class)
+        );
     }
 }
