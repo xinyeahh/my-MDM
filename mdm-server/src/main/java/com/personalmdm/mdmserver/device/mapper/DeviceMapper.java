@@ -20,7 +20,7 @@ public interface DeviceMapper {
          * #{fingerprint}	使用参数绑定，把传入值作为数据交给数据库
      */
     @Select("""
-            select id, device_id, fingerprint, device_name, model, os, os_version, status, create_time
+            select id, device_id, fingerprint, device_name, model, os, os_version, status, create_time, last_heartbeat_time
             from device
             where fingerprint = #{fingerprint}  
             """)
@@ -68,7 +68,7 @@ public interface DeviceMapper {
      * 用途：查询设备详情
      */
     @Select("""
-            select device_id, device_name, model, os, os_version, status, create_time
+            select device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
             from device
             where device_id = #{deviceId}
             """)
@@ -91,7 +91,7 @@ public interface DeviceMapper {
      * 页码查询设备列表
      */
     @Select("""
-            select id, device_id, device_name, model, os, os_version, status, create_time
+            select id, device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
             from device
             order by id desc
             limit #{size}
@@ -137,7 +137,7 @@ public interface DeviceMapper {
      */
     @Select("""
             <script>
-            select id, device_id, device_name, model, os, os_version, status, create_time
+            select id, device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
             from device
             <where>
                 <if test="os != null">
@@ -171,4 +171,11 @@ public interface DeviceMapper {
             @Param("deviceId")
             String deviceId
     );
+
+    @Update("""
+            update device
+            set last_heartbeat_time = current_timestamp(6)
+            where device_id=#{deviceId} and status='ACTIVE'
+            """)
+    int updateHeartbeat(@Param("deviceId") String deviceId);
 }

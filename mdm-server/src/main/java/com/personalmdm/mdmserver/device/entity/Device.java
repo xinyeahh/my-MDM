@@ -56,6 +56,13 @@ public class Device {
      */
     private LocalDateTime createTime;
 
+    /**
+     * 设备心跳
+     * 服务端最近一次收到设备联系的时间
+     * @return
+     */
+    private  LocalDateTime lastHeartbeatTime;
+
 
     public Long getId() {
         return id;
@@ -127,5 +134,13 @@ public class Device {
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public LocalDateTime getLastHeartbeatTime() {
+        return lastHeartbeatTime;
+    }
+
+    public void setLastHeartbeatTime(LocalDateTime lastHeartbeatTime) {
+        this.lastHeartbeatTime = lastHeartbeatTime;
     }
 }
