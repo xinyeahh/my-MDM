@@ -1,9 +1,6 @@
 package com.personalmdm.mdmserver.device.controller;
 
-import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
+import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -16,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -294,4 +292,41 @@ class DeviceControllerTest {
         // 4. 验证 Service 收到了 dev_missing
         verify(deviceService).getDetail("dev_missing");
     }
+
+
+    /**
+     * 测试分页查询列表接口：验证默认参数是否正确传给 Service
+     */
+    @Test
+    void listingDevicesUsesDefaultParameters() throws Exception {
+        DeviceListPageResponse page = new DeviceListPageResponse(
+                1,
+                10,
+                0L,
+                List.of()
+        );
+
+        // 1. 模拟 list(1, 10, null) 返回 page
+        when(deviceService.list(1, 10, null))
+                .thenReturn(page);
+
+        // 2. 发送 GET /device
+        mockMvc.perform(
+                get("/device")  // 因为是验证默认参数是否传入，所以此处不传查询参数
+        )
+                // 3. 检查 HTTP 200
+                .andExpect(status().isOk())
+                // 4. JSON 中 page 为 1、size 为 10、total 为 0
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.total").value(0))
+                // 5. items 是空数组
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items").isEmpty());
+
+
+        // 6. 验证 Service 收到 list(1, 10, null)
+        verify(deviceService).list(1,10,null);
+    }
+
 }
