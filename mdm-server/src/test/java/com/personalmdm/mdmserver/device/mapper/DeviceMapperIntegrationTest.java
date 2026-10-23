@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -191,6 +192,68 @@ public class DeviceMapperIntegrationTest {
         assertEquals("另一个设备", anotherFound.getDeviceName());
         // 6. 断言状态仍为 ACTIVE，避免误改其他字段
         assertEquals(DeviceStatus.ACTIVE, found.getStatus());
+    }
+
+    /**
+     * 验证动态 SQL 的筛选与分页
+     * 先按条件筛选，再排序，最后取指定页的数据。
+     */
+    @Test
+    @Transactional
+    void filteringAndPaginationReturnMatchingDevices() {
+        // 1. 按上面的顺序插入三台设备
+        Device first = new Device();
+        Device second = new Device();
+        Device third = new Device();
+
+        first.setDeviceId("dev_"+UUID.randomUUID());
+        second.setDeviceId("dev_"+UUID.randomUUID());
+        third.setDeviceId("dev_"+UUID.randomUUID());
+
+        first.setFingerprint("test_"+UUID.randomUUID());
+        second.setFingerprint("test_"+UUID.randomUUID());
+        third.setFingerprint("test_"+UUID.randomUUID());
+
+        first.setDeviceName("设备1");
+        second.setDeviceName("设备2");
+        third.setDeviceName("设备3");
+
+        first.setModel("simulator-v1");
+        second.setModel("simulator-v1");
+        third.setModel("simulator-v1");
+
+        first.setOs("Android");
+        second.setOs("iOS");
+        third.setOs("Android");
+
+        first.setOsVersion("15");
+        second.setOsVersion("15");
+        third.setOsVersion("15");
+
+        first.setStatus(DeviceStatus.ACTIVE);
+        second.setStatus(DeviceStatus.ACTIVE);
+        third.setStatus(DeviceStatus.ACTIVE);
+
+        deviceMapper.insert(first);
+        deviceMapper.insert(second);
+        deviceMapper.insert(third);
+
+        // 2. 查询 Android 设备总数，预期为 2
+        long total = deviceMapper.countAllByOs("Android");
+        assertEquals(2L, total);
+
+        // 3. 查询 Android 第一页，每页 1 条，offset 为 0
+        //    预期只有“Android新设备”
+        List<Device> thirdDevice = deviceMapper.findPageByOs(1, 0L, "Android");
+        assertEquals(1,thirdDevice.size());
+        assertEquals("设备3", thirdDevice.getFirst().getDeviceName());
+
+        // 4. 查询 Android 第二页，每页 1 条，offset 为 1
+        //    预期只有“Android旧设备”
+        List<Device> firstDevice = deviceMapper.findPageByOs(1, 1L, "Android");
+        assertEquals(1,firstDevice.size());
+        assertEquals("设备1", firstDevice.getFirst().getDeviceName());
+
     }
 
 }
