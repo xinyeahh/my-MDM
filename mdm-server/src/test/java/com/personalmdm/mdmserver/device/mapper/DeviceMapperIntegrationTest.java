@@ -2,6 +2,7 @@ package com.personalmdm.mdmserver.device.mapper;
 
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
+import com.personalmdm.mdmserver.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -127,12 +128,48 @@ public class DeviceMapperIntegrationTest {
                 device.getDeviceId()
         );
 
+        // 核心验证
         assertEquals(1, rows);
 
-        // 更新后重新查询数据库，检查记录仍然存在，名称仍是预期值
+        // 补充检查：更新后重新查询数据库，检查记录仍然存在，名称仍是预期值
         Device found = deviceMapper.findByDeviceId(device.getDeviceId());
 
         assertNotNull(found);
         assertEquals("原名称", found.getDeviceName());
+    }
+
+    /**
+     * 验证名称确实能从旧值改成新值
+     */
+    @Test
+    @Transactional
+    void renamingDevicePersistsNewName() {
+        Device device = new Device();
+        device.setDeviceId("dev_" + UUID.randomUUID());
+        device.setFingerprint("test-" + UUID.randomUUID());
+        device.setDeviceName("旧名称");
+        device.setModel("simulator-v1");
+        device.setOs("Android");
+        device.setOsVersion("15");
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        deviceMapper.insert(device);
+
+        // 1. 调用 updateName，将这台设备改为“新名称”
+        //    保存返回的行数
+        int rows = deviceMapper.updateName("新名称", device.getDeviceId());
+
+        // 2. 断言行数为 1
+        assertEquals(1, rows);
+
+        // 3. 根据 deviceId 重新查询设备
+        Device found = deviceMapper.findByDeviceId(device.getDeviceId());
+
+        // 4. 断言查询结果不为 null
+        assertNotNull(found);
+        // 5. 断言查询到的名称为“新名称”
+        assertEquals("新名称", found.getDeviceName());
+        // 6. 断言状态仍为 ACTIVE，避免误改其他字段
+        assertEquals(DeviceStatus.ACTIVE, found.getStatus());
     }
 }
