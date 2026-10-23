@@ -432,5 +432,26 @@ class DeviceServiceTest {
         verify(deviceMapper).findPageByOs(5, 10L, "Android");
 
     }
+
+    /**
+     * 测试分页查询列表接口
+     * 验证非法分页参数在查询数据库之前被拒绝
+     */
+    @Test
+    void invalidPageIsRejectedBeforeQueryingDatabase() {
+        DeviceService service = new DeviceService(deviceMapper);
+
+        // 1. 调用 list(0, 10, null)，断言抛出 ResponseStatusException
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.list(0, 10, null)
+        );
+
+        // 2. 检查异常状态为 BAD_REQUEST
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+
+        // 3. 验证 Mapper 没有被调用
+        verifyNoInteractions(deviceMapper);
+    }
 }
 
