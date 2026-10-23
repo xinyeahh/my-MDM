@@ -140,6 +140,11 @@ public class DeviceMapperIntegrationTest {
 
     /**
      * 验证名称确实能从旧值改成新值
+     *
+     * - 两台设备都已插入数据库。
+     * - 只更新第一台。
+     * - 重新查询两台，确认第一台名称改变，第二台名称未变。
+     * - 第一台状态保持 ACTIVE。
      */
     @Test
     @Transactional
@@ -155,6 +160,18 @@ public class DeviceMapperIntegrationTest {
 
         deviceMapper.insert(device);
 
+        Device another = new Device();
+
+        another.setDeviceId("dev_" + UUID.randomUUID());
+        another.setFingerprint("test-" + UUID.randomUUID());
+        another.setDeviceName("另一个设备");
+        another.setModel("simulator-v1");
+        another.setOs("Android");
+        another.setOsVersion("15");
+        another.setStatus(DeviceStatus.ACTIVE);
+
+        deviceMapper.insert(another);
+
         // 1. 调用 updateName，将这台设备改为“新名称”
         //    保存返回的行数
         int rows = deviceMapper.updateName("新名称", device.getDeviceId());
@@ -162,14 +179,18 @@ public class DeviceMapperIntegrationTest {
         // 2. 断言行数为 1
         assertEquals(1, rows);
 
-        // 3. 根据 deviceId 重新查询设备
+        // 3. 根据 deviceId 重新查询设备，必须有这一步，否则断言直接查刚才手动赋值的设备对象，查的就是内存了
         Device found = deviceMapper.findByDeviceId(device.getDeviceId());
+        Device anotherFound = deviceMapper.findByFingerprint(another.getFingerprint());
 
         // 4. 断言查询结果不为 null
         assertNotNull(found);
+        assertNotNull(anotherFound);
         // 5. 断言查询到的名称为“新名称”
         assertEquals("新名称", found.getDeviceName());
+        assertEquals("另一个设备", anotherFound.getDeviceName());
         // 6. 断言状态仍为 ACTIVE，避免误改其他字段
         assertEquals(DeviceStatus.ACTIVE, found.getStatus());
     }
+
 }
