@@ -113,7 +113,7 @@ public class DeviceService {
      * @return          设备注册响应 DTO
      */
     private DeviceRegisterResponse buildRegisterResponse(Device device){
-        if(device.getStatus() == DeviceStatus.REVOKE){
+        if(device.getStatus() == DeviceStatus.REVOKED){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "设备已撤销，不允许重新注册！");
         }
 

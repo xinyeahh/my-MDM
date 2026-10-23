@@ -231,4 +231,48 @@ public class DeviceMapperIntegrationTest {
 
     }
 
+    /**
+     * 验证设备心跳是否真的写入数据库
+     */
+    @Test
+    @Transactional
+    void activeDeviceHeartbeatIsRecorded() {
+        Device device = createDevice("心跳测试设备", "Android");
+        deviceMapper.insert(device);
+
+        // 心跳前
+        Device before = deviceMapper.findByDeviceId(device.getDeviceId());
+        assertNotNull(before);
+        assertNull(before.getLastHeartbeatTime());
+
+        int rows = deviceMapper.updateHeartbeat(device.getDeviceId());
+
+        assertEquals(1, rows);
+
+        // 心跳后
+        Device after = deviceMapper.findByDeviceId(device.getDeviceId());
+        assertNotNull(after);
+        assertNotNull(after.getLastHeartbeatTime());
+    }
+
+    /**
+     * 已撤销设备的心跳不被记录
+     */
+    @Test
+    @Transactional
+    void revokedDeviceHeartbeatIsNotRecorded() {
+        // 1. 创建测试设备，将状态设为 REVOKED，再插入
+        Device device = createDevice("撤销的心跳设备", "Android");
+        device.setStatus(DeviceStatus.REVOKED);
+        deviceMapper.insert(device);
+
+        // 2. 调用 updateHeartbeat，预期返回 0
+        int row = deviceMapper.updateHeartbeat(device.getDeviceId());
+        assertEquals(0, row);
+
+        // 3. 重新查询，确认心跳时间仍为 null
+        Device after = deviceMapper.findByDeviceId(device.getDeviceId());
+        assertNotNull(after);
+        assertNull(after.getLastHeartbeatTime());
+    }
 }

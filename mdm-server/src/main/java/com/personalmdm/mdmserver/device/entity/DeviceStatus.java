@@ -6,5 +6,5 @@ package com.personalmdm.mdmserver.device.entity;
  */
 public enum DeviceStatus {
     ACTIVE,     // 已激活
-    REVOKE      // 已撤销
+    REVOKED      // 已撤销
 }

@@ -65,7 +65,7 @@ class DeviceServiceTest {
          */
         Device existing = new Device();             // 表示数据库查询后发现了什么
         existing.setDeviceId("dev_test");           // 设备业务标识
-        existing.setStatus(DeviceStatus.REVOKE);    // 设备已撤销
+        existing.setStatus(DeviceStatus.REVOKED);    // 设备已撤销
 
         /**
          * 创建注册请求，并设置设备指纹
@@ -152,7 +152,7 @@ class DeviceServiceTest {
         // 准备：模拟数据库中的一台设备
         Device existing = new Device();
         existing.setDeviceId("dev_test");
-        existing.setStatus(DeviceStatus.REVOKE);
+        existing.setStatus(DeviceStatus.REVOKED);
 
         // 准备：注册请求
         DeviceRegisterRequest request = new DeviceRegisterRequest();
