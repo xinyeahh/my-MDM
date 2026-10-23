@@ -35,6 +35,9 @@ create table device(
     -- 创建时间：datetime类型（小数秒精度为6位）；未显示提供时，自动填充创建时间；非空
     create_time datetime(6) default current_timestamp(6) not null,
 
+    -- 设备心跳：服务端最近一次收到设备联系的时间
+    last_heartbeat_time datetime(6) null,
+
     -- ## 表级约束：规定数据必须满足什么条件
 
     -- 指定id为主键：唯一；非空
