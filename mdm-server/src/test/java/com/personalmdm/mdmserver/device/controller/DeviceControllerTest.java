@@ -7,9 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -92,4 +94,31 @@ class DeviceControllerTest {
     }
 
 
+    /**
+     * 设备注册
+     * 测试 Service 抛出的异常能否转换成 HTTP 403
+     */
+    @Test
+    void forbiddenRegistrationReturns403() throws Exception {
+        when(deviceService.register(any(DeviceRegisterRequest.class)))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "设备已撤销，不能重新注册"
+                ));
+
+        mockMvc.perform(
+                post("/device/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        . content("""
+                                {
+                                    "deviceName": "测试设备",
+                                    "model": "simulator-v1",
+                                    "os": "Android",
+                                    "osVersion": "15",
+                                    "fingerprint": "install-revoke"
+                                }
+                                """)
+        ).andExpect(status().isForbidden());    // 期待403的响应
+        verify(deviceService).register(any(DeviceRegisterRequest.class));
+    }
 }
