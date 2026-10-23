@@ -358,4 +358,23 @@ class DeviceControllerTest {
         // 4. 验证 Service 收到 list(2, 5, "Android")
         verify(deviceService).list(2,5,"Android");
     }
+
+    /**
+     * 测试分页查询列表接口：页码无法转换成整数时，Spring 返回 400
+     */
+    @Test
+    void nonNumericPageReturnsBadRequest() throws Exception {
+        // 1. 发送 GET /device，使用 .param("page", "abc")
+        mockMvc.perform(
+                get("/device")
+                        .param("page", "abc")
+        )
+                // 2. 检查 HTTP 400
+                .andExpect(status().isBadRequest());
+
+        // 3. 验证 Service 没有被调用
+        verifyNoInteractions(deviceService);
+    }
+
+
 }
