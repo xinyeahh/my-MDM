@@ -1,5 +1,6 @@
 package com.personalmdm.mdmserver.device.controller;
 
+import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
@@ -14,10 +15,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,8 +37,8 @@ class DeviceControllerTest {
     private DeviceService deviceService;
 
     /**
-     * 设备注册：参数违法-设备名称只由空格组成
-     *
+     * 设备注册接口：输入违法400
+     * 被注解为@NotBlank的参数，输入空格
      * @throws Exception
      */
     @Test
@@ -59,7 +61,7 @@ class DeviceControllerTest {
     }
 
     /**
-     * 设备注册：参数合法
+     * 设备注册接口：参数合法200
      */
     @Test
     void validRegistrationReturnsDeviceId() throws Exception{
@@ -102,7 +104,7 @@ class DeviceControllerTest {
 
 
     /**
-     * 设备注册
+     * 设备注册接口：设备已撤销 403
      * 测试 Service 抛出的异常能否转换成 HTTP 403
      */
     @Test
@@ -130,7 +132,7 @@ class DeviceControllerTest {
     }
 
     /**
-     * 设备改名接口
+     * 设备改名接口：成功204
      * 重点检查：路径中的设备ID和JSON中的新名称，是否正确传给了Service，以及成功时是否返回了204
      * @throws Exception
      */
@@ -162,7 +164,7 @@ class DeviceControllerTest {
     }
 
     /**
-     * 设备重命名：测参数校验。使用空白名称，预期400
+     * 设备改名接口：输入违法400
      * @throws Exception
      */
     @Test
@@ -185,7 +187,7 @@ class DeviceControllerTest {
     }
 
     /**
-     * 设备改名：测设备不存在
+     * 设备改名接口：设备不存在404
      * Service判断设备不存在，Controller返回404
      * @throws Exception
      */
@@ -220,5 +222,49 @@ class DeviceControllerTest {
                 eq("dev_missing"),
                 any(DeviceRenameRequest.class)
         );
+    }
+
+    /**
+     * 设备详情查询接口：成功200
+     * @throws Exception
+     */
+    @Test
+    void existingDeviceReturnsDetail() throws Exception {
+        DeviceDetailResponse detail = new DeviceDetailResponse(
+                "dev_existing",
+                "测试设备",
+                "simulator-v1",
+                "Android",
+                "15",
+               "ACTIVE",
+                LocalDateTime.of(2026, 10, 23, 10, 0)
+        );
+
+        // 1. 模拟 getDetail("dev_existing") 返回 detail
+        when(deviceService.getDetail("dev_existing")).thenReturn(detail);
+
+        // 2. 使用 mockMvc 发送 GET /device/dev_existing
+        mockMvc.perform(
+                get("/device/{deviceId}", "dev_existing")
+        )
+                // 3. 验证 HTTP 200
+                .andExpect(status().isOk())
+                /**
+                 * 4. 验证 JSON 中：
+                 *  - deviceId 为 dev_existing
+                 *  - deviceName 为 测试设备
+                 *  - status 为 ACTIVE
+                 *  jsonPath(...)：检查返回给客户端的数据。
+                 *  每个 .andExpect(...) 增加一项检查，可以连续写多个，最后才用分号结束。
+                 */
+                .andExpect(jsonPath("$.deviceId").value("dev_existing"))
+                .andExpect(jsonPath("$.deviceName").value("测试设备"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        /**
+         * 5. 验证 Service 收到了正确的设备 ID
+         * verify(...)：检查传给 Service 的参数。
+         */
+        verify(deviceService).getDetail("dev_existing");
     }
 }
