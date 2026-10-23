@@ -2,6 +2,7 @@
 package com.personalmdm.mdmserver.device.service;
 
 // 测试所需的类
+import com.personalmdm.mdmserver.device.dto.DeviceListPageResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
 import com.personalmdm.mdmserver.device.entity.Device;
@@ -17,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 // 静态导入：允许直接使用方法，不用每次都写完整的类名
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -373,6 +376,32 @@ class DeviceServiceTest {
 
         // 4. 验证 Mapper 收到正确的设备 ID
         verify(deviceMapper).revoke("dev_existing");
+    }
+
+    /**
+     * 测试分页查询设备列表接口：
+     * 验证之前修复过的 空白系统筛选条件，防止以后改代码时再次出现“total 有值但列表为空”的问题。
+     */
+    @Test
+    void blankOsIsTreatedAsNoFilter() {
+        // 1. 模拟 countAllByOs(null) 返回 0L
+        when(deviceMapper.countAllByOs(null)).thenReturn(0L);
+
+        // 2. 模拟 findPageByOs(10, 0L, null) 返回空列表
+        when(deviceMapper.findPageByOs(10, 0L, null)).thenReturn(List.of());    // 空列表不等于 null，而是List.of()
+
+        DeviceService deviceService = new DeviceService(deviceMapper);
+
+        // 3. 调用 list(1, 10, "   ")，保存响应
+        DeviceListPageResponse response = deviceService.list(1, 10, "   ");
+
+        // 4. 断言 total 为 0，items 为空
+        assertEquals(0L, response.total());
+        assertTrue(response.items().isEmpty());
+
+        // 5. 验证两次 Mapper 调用收到的筛选值都是 null
+        verify(deviceMapper).countAllByOs(null);
+        verify(deviceMapper).findPageByOs(10, 0L, null);
     }
 }
 
