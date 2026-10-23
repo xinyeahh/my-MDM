@@ -2,6 +2,7 @@ package com.personalmdm.mdmserver.device.controller;
 
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
+import com.personalmdm.mdmserver.device.dto.DeviceRenameRequest;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,12 +16,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @WebMvcTest(DeviceController.class) // 加载Controller及相关MVC测试环境
 class DeviceControllerTest {
@@ -75,9 +78,13 @@ class DeviceControllerTest {
                                 }
                                 """)
         )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.deviceId")   // 表示读取响应 JSON 根对象中的 deviceId 字段。这里验证的是客户端实际收到的 JSON，而不是直接读取 Java 对象。
-                        .value("dev_test"));
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.deviceId")   // 表示读取响应 JSON 根对象中的 deviceId 字段。这里验证的是客户端实际收到的 JSON，而不是直接读取 Java 对象。
+                        .value("dev_test")
+                );
 
         // 捕获的是 Controller 传给 Service 的请求 DTO，用于检查 JSON 字段是否被正确解析。
         ArgumentCaptor<DeviceRegisterRequest> captor = ArgumentCaptor.forClass(DeviceRegisterRequest.class);
@@ -121,4 +128,38 @@ class DeviceControllerTest {
         ).andExpect(status().isForbidden());    // 期待403的响应
         verify(deviceService).register(any(DeviceRegisterRequest.class));
     }
+
+    /**
+     * 设备改名接口
+     * 重点检查：路径中的设备ID和JSON中的新名称，是否正确传给了Service，以及成功时是否返回了204
+     * @throws Exception
+     */
+    @Test
+    void validRenameReturnsNocontent() throws Exception {
+        mockMvc.perform(
+                patch("/device/{deviceId}/name", "dev_existing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "deviceName": "新名称"
+                                }
+                                """)
+        ).andExpect(status().isNoContent());
+
+        // 捕获改名请求
+        ArgumentCaptor<DeviceRenameRequest> captor = ArgumentCaptor.forClass(DeviceRenameRequest.class);
+
+        verify(deviceService).rename(
+                /**
+                 * 表示参数必须等于这个设备 ID。
+                 * 由于第二个参数用了 captor.capture() 这个 Mockito 匹配器，第一个参数也要使用匹配器，不能直接混写成普通字符串。
+                 */
+                eq("dev_existing"),
+                captor.capture()
+        );
+
+        assertEquals("新名称", captor.getValue().getDeviceName());
+    }
+
+
 }
