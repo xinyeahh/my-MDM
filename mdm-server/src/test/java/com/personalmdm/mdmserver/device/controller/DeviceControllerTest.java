@@ -161,5 +161,22 @@ class DeviceControllerTest {
         assertEquals("新名称", captor.getValue().getDeviceName());
     }
 
+    /**
+     * 设备重命名：设备新名称仅由空格组成，违法
+     * @throws Exception
+     */
+    @Test
+    void invalidRenameReturnsForbidden () throws Exception {
+        mockMvc.perform(
+                patch("/device/{deviceId}/name", "dev_existing")    // 路径中的{deviceId}需要替换值
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "deviceName": "    "
+                                }
+                                """)
+        ).andExpect(status().isBadRequest());
 
+        verifyNoInteractions(deviceService);
+    }
 }
