@@ -95,27 +95,14 @@ public class DeviceMapperIntegrationTest {
     @Test
     @Transactional
     void duplicateFingerprintIsRejected() {
-        String fingerprint = "test-" + UUID.randomUUID();
 
-        Device first = new Device();
-        first.setDeviceId("dev_" + UUID.randomUUID());
-        first.setFingerprint(fingerprint);
-        first.setDeviceName("第一台测试设备");
-        first.setModel("simulator-v1");
-        first.setOs("Android");
-        first.setOsVersion("15");
-        first.setStatus(DeviceStatus.ACTIVE);
+        Device first = createDevice("第一台测试设备", "Android");
 
         deviceMapper.insert(first);
 
-        Device second = new Device();
-        second.setDeviceId("dev_" + UUID.randomUUID());
-        second.setFingerprint(fingerprint);
-        second.setDeviceName("第二台测试设备");
-        second.setModel("simulator-v2");
-        second.setOs("Android");
-        second.setOsVersion("15");
-        second.setStatus(DeviceStatus.ACTIVE);
+        Device second = createDevice("第二台测试设备", "Android");
+        // 覆盖辅助方法生成的指纹，构造重复条件
+        second.setFingerprint(first.getFingerprint());
 
         assertThrows(
                 DuplicateKeyException.class,
