@@ -48,13 +48,14 @@ class DeviceServiceTest {
     /**
      * 注册
      * 撤销设备不允许重新注册
+     *
      * @Test 表示这是一个可以由JUnit执行的测试方法
      * 方法名采用行为描述式命名，表达了一个业务规则
-     *
+     * <p>
      * 单元测试结构：准备->执行->断言
      */
     @Test
-    void revokeDeviceCannotRegisterAgain(){
+    void revokeDeviceCannotRegisterAgain() {
         /**
          * 准备：模拟数据库中已有一台撤销设备。
          * 创建一个Device对象，并设置两个属性
@@ -145,7 +146,7 @@ class DeviceServiceTest {
      * 并发冲突后的分支也会拒绝已撤销设备
      */
     @Test
-    void revokeDeviceFoundAfterDuplicateKeyCannotRegister(){
+    void revokeDeviceFoundAfterDuplicateKeyCannotRegister() {
         // 准备：模拟数据库中的一台设备
         Device existing = new Device();
         existing.setDeviceId("dev_test");
@@ -190,7 +191,7 @@ class DeviceServiceTest {
      * 检查：返回原 ID，未调用 insert()
      */
     @Test
-    void activeDeviceRegisterAgainWithSameId(){
+    void activeDeviceRegisterAgainWithSameId() {
         // 准备：模拟数据库中已存在的一个设备
         Device existing = new Device();
         existing.setDeviceId("dev_existing");
@@ -222,7 +223,7 @@ class DeviceServiceTest {
      * 查询指纹 → 不存在 → 创建设备 → 插入 → 返回新 deviceId
      */
     @Test
-    void newDeviceRegistersSuccessfully(){
+    void newDeviceRegistersSuccessfully() {
         // 准备：新设备注册请求
         DeviceRegisterRequest request = new DeviceRegisterRequest();
         request.setFingerprint("install-new");
@@ -268,7 +269,7 @@ class DeviceServiceTest {
      * 因为冲突也可能来自device_id，不能把所有唯一键冲突都当成“重复设备注册成功”。
      */
     @Test
-    void duplicateKeyWithoutExistingDeviceRethrowOriginalException(){
+    void duplicateKeyWithoutExistingDeviceRethrowOriginalException() {
         // 准备：设备注册请求
         DeviceRegisterRequest request = new DeviceRegisterRequest();
         request.setFingerprint("install-conflict");
@@ -292,7 +293,7 @@ class DeviceServiceTest {
          * assertEquals 检查值是否相等
          * assertSame 检查是否为同一个对象。
          */
-        assertSame(oringinal,actual);   // 检查抛出的就是原来的那个异常对象，对应service中的 `throw e;`
+        assertSame(oringinal, actual);   // 检查抛出的就是原来的那个异常对象，对应service中的 `throw e;`
 
         // 验证是否执行两次查询
         verify(
@@ -306,7 +307,7 @@ class DeviceServiceTest {
      * 插入发生冲突后，查到了已激活设备，应返回已有身份
      */
     @Test
-    void activeDeviceFoundAfterDuplicateKeyReturnsExistingId(){
+    void activeDeviceFoundAfterDuplicateKeyReturnsExistingId() {
         // 1. 准备已有设备：deviceId 为 dev_existing，状态为 ACTIVE
         Device existing = new Device();
         existing.setDeviceId("dev_existing");
@@ -317,7 +318,7 @@ class DeviceServiceTest {
         request.setFingerprint("install-race");
 
         // 3. 模拟第一次查询返回 null，第二次返回已有设备
-        when(deviceMapper.findByFingerprint("install-race")).thenReturn(null,existing);
+        when(deviceMapper.findByFingerprint("install-race")).thenReturn(null, existing);
 
         // 4. 模拟 insert 抛出 DuplicateKeyException
         when(deviceMapper.insert(any(Device.class))).thenThrow(DuplicateKeyException.class);
@@ -403,6 +404,33 @@ class DeviceServiceTest {
         verify(deviceMapper).countAllByOs(null);
         verify(deviceMapper).findPageByOs(10, 0L, null);
     }
-}
 
+    /**
+     * 测试分页查询列表接口
+     * 把页码到偏移量的计算也纳入测试，同时验证普通筛选值会去掉首尾空格
+     */
+    @Test
+    void listingDevicesCalculatesOffsetAndTrimsOs() {
+        // 1. 模拟 countAllByOs("Android") 返回 12L
+        when(deviceMapper.countAllByOs("Android")).thenReturn(12L);
+
+        // 2. 模拟 findPageByOs(5, 10L, "Android") 返回空列表
+        when(deviceMapper.findPageByOs(5, 10L, "Android")).thenReturn(List.of());
+
+        DeviceService service = new DeviceService(deviceMapper);
+
+        // 3. 调用 list(3, 5, "  Android  ")
+        DeviceListPageResponse response = service.list(3, 5, "  Android   ");
+
+        // 4. 检查响应 page=3、size=5、total=12
+        assertEquals(3, response.page());
+        assertEquals(5, response.size());
+        assertEquals(12, response.total());
+
+        // 5. 验证两条 Mapper 查询的参数
+        verify(deviceMapper).countAllByOs("Android");
+        verify(deviceMapper).findPageByOs(5, 10L, "Android");
+
+    }
+}
 
