@@ -267,4 +267,31 @@ class DeviceControllerTest {
          */
         verify(deviceService).getDetail("dev_existing");
     }
+
+
+    /**
+     * 设备详情接口：设备不存在 404
+     * @throws Exception
+     */
+    @Test
+    void missingDeviceReturnNotFound() throws Exception {
+        // 1. 模拟 getDetail("dev_missing")
+        //    抛出 ResponseStatusException，状态为 NOT_FOUND
+        when(deviceService.getDetail("dev_missing"))
+                .thenThrow(
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "设备不存在"
+                        )
+                );
+
+        // 2. 用 mockMvc 发送 GET 请求，设备 ID 放在路径中
+        mockMvc.perform(
+                get("/device/{deviceId}", "dev_missing")
+        )
+                // 3. 检查 HTTP 状态为 404
+                .andExpect(status().isNotFound());
+        // 4. 验证 Service 收到了 dev_missing
+        verify(deviceService).getDetail("dev_missing");
+    }
 }
