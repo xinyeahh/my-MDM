@@ -329,4 +329,33 @@ class DeviceControllerTest {
         verify(deviceService).list(1,10,null);
     }
 
+    /**
+     * 测试分页查询列表接口：验证显示传入的查询参数
+     */
+    @Test
+    void listingDevicesPassesQueryParameters() throws Exception {
+        DeviceListPageResponse page = new DeviceListPageResponse(
+                2,
+                5,
+                0L,
+                List.of()
+        );
+
+        // 1. 模拟 list(2, 5, "Android") 返回 page
+        when(deviceService.list(2,5,"Android")).thenReturn(page);
+
+        // 2. 发送 GET /device，并用 .param(...) 设置三个查询参数
+        mockMvc.perform(
+                get("/device")
+                        .param("page", "2")
+                        .param("size", "5")
+                        .param("os", "Android")
+        )
+                // 3. 检查 HTTP 200，JSON 中 page 为 2、size 为 5
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.size").value(5));
+        // 4. 验证 Service 收到 list(2, 5, "Android")
+        verify(deviceService).list(2,5,"Android");
+    }
 }
