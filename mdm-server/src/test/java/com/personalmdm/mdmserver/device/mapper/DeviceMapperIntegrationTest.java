@@ -5,14 +5,14 @@ import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest             // 启动真实Spring应用上下文，默认不启动监听端口
 @ActiveProfiles("test")     // 启动 application-test.properties 配置
@@ -68,5 +68,40 @@ public class DeviceMapperIntegrationTest {
         assertEquals(device.getDeviceName(), found.getDeviceName());
         assertEquals(device.getStatus(), found.getStatus());
         assertNotNull(found.getCreateTime());
+    }
+
+    /**
+     * 验证数据库的 fingerprint 唯一约束
+     * 插入两台设备：身份不同，但指纹相同，预期第二次插入被拒绝。
+     */
+    @Test
+    @Transactional
+    void duplicateFingerprintIsRejected() {
+        String fingerprint = "test-" + UUID.randomUUID();
+
+        Device first = new Device();
+        first.setDeviceId("dev_" + UUID.randomUUID());
+        first.setFingerprint(fingerprint);
+        first.setDeviceName("第一台测试设备");
+        first.setModel("simulator-v1");
+        first.setOs("Android");
+        first.setOsVersion("15");
+        first.setStatus(DeviceStatus.ACTIVE);
+
+        deviceMapper.insert(first);
+
+        Device second = new Device();
+        second.setDeviceId("dev_" + UUID.randomUUID());
+        second.setFingerprint(fingerprint);
+        second.setDeviceName("第二台测试设备");
+        second.setModel("simulator-v2");
+        second.setOs("Android");
+        second.setOsVersion("15");
+        second.setStatus(DeviceStatus.ACTIVE);
+
+        assertThrows(
+                DuplicateKeyException.class,
+                () -> deviceMapper.insert(second)
+        );
     }
 }
