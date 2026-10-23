@@ -104,4 +104,35 @@ public class DeviceMapperIntegrationTest {
                 () -> deviceMapper.insert(second)
         );
     }
+
+    /**
+     * 验证之前改名逻辑依赖的一个关键约定：名称没有变化时，Mapper 仍返回匹配行数 1。
+     */
+    @Test
+    @Transactional
+    void renamingToSameNameReturnsOneMatchedRow() {
+        Device device = new Device();
+        device.setDeviceId("dev_" + UUID.randomUUID());
+        device.setFingerprint("test-" + UUID.randomUUID());
+        device.setDeviceName("原名称");
+        device.setModel("simulator-v1");
+        device.setOs("Android");
+        device.setOsVersion("15");
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        deviceMapper.insert(device);
+
+        int rows = deviceMapper.updateName(
+                "原名称",
+                device.getDeviceId()
+        );
+
+        assertEquals(1, rows);
+
+        // 更新后重新查询数据库，检查记录仍然存在，名称仍是预期值
+        Device found = deviceMapper.findByDeviceId(device.getDeviceId());
+
+        assertNotNull(found);
+        assertEquals("原名称", found.getDeviceName());
+    }
 }
