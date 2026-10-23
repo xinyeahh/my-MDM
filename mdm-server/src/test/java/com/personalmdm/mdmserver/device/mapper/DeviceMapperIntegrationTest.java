@@ -26,6 +26,22 @@ public class DeviceMapperIntegrationTest {
     @Autowired
     private DeviceMapper deviceMapper;
 
+    /**
+     * 提取测试数据的创建方法
+     * @return
+     */
+    private Device createDevice(String name, String os){
+        Device device = new Device();
+        device.setDeviceId("dev_" + UUID.randomUUID());
+        device.setFingerprint("test_" + UUID.randomUUID());
+        device.setDeviceName(name);
+        device.setModel("simulator-v1");
+        device.setOs(os);
+        device.setOsVersion("15");
+        device.setStatus(DeviceStatus.ACTIVE);
+        return device;
+    }
+
     @Test
     void connectsToTestDatabase() {
         String database = jdbcTemplate.queryForObject(
@@ -202,37 +218,9 @@ public class DeviceMapperIntegrationTest {
     @Transactional
     void filteringAndPaginationReturnMatchingDevices() {
         // 1. 按上面的顺序插入三台设备
-        Device first = new Device();
-        Device second = new Device();
-        Device third = new Device();
-
-        first.setDeviceId("dev_"+UUID.randomUUID());
-        second.setDeviceId("dev_"+UUID.randomUUID());
-        third.setDeviceId("dev_"+UUID.randomUUID());
-
-        first.setFingerprint("test_"+UUID.randomUUID());
-        second.setFingerprint("test_"+UUID.randomUUID());
-        third.setFingerprint("test_"+UUID.randomUUID());
-
-        first.setDeviceName("设备1");
-        second.setDeviceName("设备2");
-        third.setDeviceName("设备3");
-
-        first.setModel("simulator-v1");
-        second.setModel("simulator-v1");
-        third.setModel("simulator-v1");
-
-        first.setOs("Android");
-        second.setOs("iOS");
-        third.setOs("Android");
-
-        first.setOsVersion("15");
-        second.setOsVersion("15");
-        third.setOsVersion("15");
-
-        first.setStatus(DeviceStatus.ACTIVE);
-        second.setStatus(DeviceStatus.ACTIVE);
-        third.setStatus(DeviceStatus.ACTIVE);
+        Device first = createDevice("设备1", "Android");
+        Device second = createDevice("设备2", "iOS");
+        Device third = createDevice("设备3", "Android");
 
         deviceMapper.insert(first);
         deviceMapper.insert(second);
