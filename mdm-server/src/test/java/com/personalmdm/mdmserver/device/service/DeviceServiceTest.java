@@ -483,6 +483,27 @@ class DeviceServiceTest {
         verifyNoInteractions(deviceMapper);
     }
 
+    /**
+     * 测试分页查询列表接口
+     * 合法值边界测试
+     */
+    @Test
+    void maximumPageSizeIsAccepted() {
+        // 模拟 countAllByOs(null) 返回 0L
+        when(deviceMapper.countAllByOs(null)).thenReturn(0L);
 
+        // 模拟 findPageByOs(100, 0L, null) 返回空列表
+        when(deviceMapper.findPageByOs(100, 0L, null)).thenReturn(List.of());
+
+        // 调用 list(1, 100, null)
+        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceListPageResponse response = deviceService.list(1, 100, null);
+
+        // 检查响应 size 为 100
+        assertEquals(100, response.size());
+
+        // 验证分页查询收到正确参数
+        verify(deviceMapper).findPageByOs(100, 0L, null);
+    }
 }
 
