@@ -10,6 +10,8 @@ import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -453,5 +455,34 @@ class DeviceServiceTest {
         // 3. 验证 Mapper 没有被调用
         verifyNoInteractions(deviceMapper);
     }
+
+    /**
+     * 测试分页查询列表接口
+     * 参数化测试：用同一段测试逻辑检查多组输入
+     */
+    @ParameterizedTest
+    @CsvSource({
+            "0, 10",
+            "-1, 10",
+            "1, 0",
+            "1, -1",
+            "1, 101"
+    })
+    void invalidPaginationIsRejectedBeforeQueryingDatabase(
+            int page,
+            int size
+    ){
+        DeviceService service = new DeviceService(deviceMapper);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.list(page, size, null)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        verifyNoInteractions(deviceMapper);
+    }
+
+
 }
 
