@@ -1,6 +1,7 @@
 package com.personalmdm.mdmserver.device.controller;
 
 import com.personalmdm.mdmserver.device.dto.*;
+import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,14 +23,16 @@ public class DeviceController {
      * DeviceController 正常运行时就应该依赖一个确定的 Service。使用 final 能明确表达这个依赖是必需的，不应该在对象创建后随意更换。
      */
     private final DeviceService deviceService;
+    private final DeviceMapper deviceMapper;
 
     /**
      * 构造方法
      * 当 Spring 扫描到这个 Controller，并且容器中存在可注入的 DeviceService Bean 时，Spring 就可以调用这个构造器，把 Service 传进来。
      * @param deviceService 服务
      */
-    public DeviceController(DeviceService deviceService){
+    public DeviceController(DeviceService deviceService, DeviceMapper deviceMapper){
         this.deviceService = deviceService;
+        this.deviceMapper = deviceMapper;
     }
 
     /**
@@ -107,6 +110,19 @@ public class DeviceController {
             String deviceId
     ){
         deviceService.revoke(deviceId);
+    }
+
+
+    /**
+     * 获取设备心跳
+     */
+    @PostMapping("/{deviceId}/heartbeat")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void heartbeat(
+            @PathVariable("deviceId")
+            String deviceId
+    ){
+        deviceService.heartbeat(deviceId);
     }
 
 }

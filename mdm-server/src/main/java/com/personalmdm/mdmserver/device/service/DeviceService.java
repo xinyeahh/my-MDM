@@ -238,4 +238,50 @@ public class DeviceService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在");
         }
     }
+
+    /**
+     * 获取设备心跳
+     * @param deviceId 设备业务ID
+     */
+    public void heartbeat(String deviceId){
+
+        int rows = deviceMapper.updateHeartbeat(deviceId);
+
+        // 心跳更新成功
+        if (rows == 1){
+            return;
+        }
+
+        // 心跳更新失败，撤销设备 or 设备不存在
+        Device existing = deviceMapper.findByDeviceId(deviceId);
+
+        // 404: 设备不存在
+        if (existing == null){
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "设备不存在"
+            );
+        }
+
+        // 设备存在，但已被撤销
+        if (existing.getStatus() == DeviceStatus.REVOKED){
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "设备已撤销，不能上报心跳"
+            );
+        }
+
+        /**
+         * 409 Conflict兜底
+         * 更新没有成功，但后续查询也无法把原因归结为“不存在”或“已撤销”
+         * 例如：
+         * 1. 心跳请求 A：执行 UPDATE，此时设备是 REVOKED，返回 0
+         * 2. 管理员操作 B：吧设备恢复成 ACTIVE
+         * 3. 心跳请求 A：在排查更新失败原因的时候，发现它存在，而且是 ACTIVE
+         */
+        throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "设备状态已变化，请重试"
+        );
+    }
 }
