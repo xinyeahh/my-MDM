@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 // 静态导入：允许直接使用方法，不用每次都写完整的类名
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -96,7 +97,8 @@ class DeviceServiceTest {
          */
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         /**
@@ -174,7 +176,8 @@ class DeviceServiceTest {
         // 准备：手动构造测试对象
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 执行代码
@@ -217,7 +220,8 @@ class DeviceServiceTest {
         // 准备：构造注入mapper
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 执行：调用注册方法，保存返回的响应 DTO
@@ -252,7 +256,8 @@ class DeviceServiceTest {
         // 准备：构造注入
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 执行
@@ -302,7 +307,8 @@ class DeviceServiceTest {
         // 准备：注入构造
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 执行：使用actual保存代码执行过程中捕获的唯一键冲突
@@ -345,7 +351,8 @@ class DeviceServiceTest {
         // 5. 创建 Service，调用 register，取得响应
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
         DeviceRegisterResponse response = deviceService.register(request);
 
@@ -368,7 +375,8 @@ class DeviceServiceTest {
 
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 2. 使用 assertThrows 调用 service.revoke("dev_missing")
@@ -397,7 +405,8 @@ class DeviceServiceTest {
         // 2. 创建 Service
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 3. 用 assertDoesNotThrow 验证撤销方法正常结束
@@ -421,7 +430,8 @@ class DeviceServiceTest {
 
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 3. 调用 list(1, 10, "   ")，保存响应
@@ -450,7 +460,8 @@ class DeviceServiceTest {
 
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 3. 调用 list(3, 5, "  Android  ")
@@ -475,7 +486,8 @@ class DeviceServiceTest {
     void invalidPageIsRejectedBeforeQueryingDatabase() {
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 1. 调用 list(0, 10, null)，断言抛出 ResponseStatusException
@@ -509,7 +521,8 @@ class DeviceServiceTest {
     ){
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         ResponseStatusException exception = assertThrows(
@@ -536,7 +549,8 @@ class DeviceServiceTest {
         // 调用 list(1, 100, null)
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
         DeviceListPageResponse response = deviceService.list(1, 100, null);
 
@@ -558,7 +572,8 @@ class DeviceServiceTest {
 
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 2. 执行心跳，确认正常结束：使用 assertDoesNotThrow 调用 heartbeat("dev_active")
@@ -586,7 +601,8 @@ class DeviceServiceTest {
 
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
 
         // 3. 使用 assertThrows 调用 heartbeat("dev_missing")
@@ -621,7 +637,8 @@ class DeviceServiceTest {
         // 3. 创建 Service，调用 heartbeat，捕获异常
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -652,7 +669,8 @@ class DeviceServiceTest {
         // 调用 heartbeat，断言抛出携带 CONFLICT 的异常
         DeviceService service = new DeviceService(
                 deviceMapper,
-                new DeviceConnectionCalculator()
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone()
         );
         ResponseStatusException exception  = assertThrows(
                 ResponseStatusException.class,
@@ -696,7 +714,7 @@ class DeviceServiceTest {
         )).thenReturn(DeviceConnectionStatus.ONLINE);
 
         // 执行
-        DeviceService service = new DeviceService(deviceMapper, calculator);
+        DeviceService service = new DeviceService(deviceMapper, calculator, Clock.systemDefaultZone());
 
         DeviceDetailResponse response = service.getDetail("dev_existing");
 

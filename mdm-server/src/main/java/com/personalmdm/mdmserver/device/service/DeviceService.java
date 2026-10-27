@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class DeviceService {
      */
     private final DeviceMapper deviceMapper;
     private final DeviceConnectionCalculator deviceConnectionCalculator;
+    private Clock clock;    // 注入 Java 自带的 Clock，让应用使用真实时间，测试使用固定时间
 
     /**
      * 构造方法
@@ -36,9 +38,12 @@ public class DeviceService {
      */
     public DeviceService(
             DeviceMapper deviceMapper,
-            DeviceConnectionCalculator deviceConnectionCalculator){
+            DeviceConnectionCalculator deviceConnectionCalculator,
+            Clock clock
+    ){
         this.deviceMapper = deviceMapper;
         this.deviceConnectionCalculator = deviceConnectionCalculator;
+        this.clock = clock;
     }
 
 
