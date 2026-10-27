@@ -585,5 +585,33 @@ class DeviceServiceTest {
         verify(deviceMapper).findByDeviceId("dev_revocked");
         verify(deviceMapper).updateHeartbeat("dev_revocked");
     }
+
+    /**
+     * 设备心跳获取接口：设备状态变化时返回409
+     */
+    @Test
+    void heartbeatReturnsConflictWhenUpdateFailsButDeviceIsActive() {
+        // 准备一个模拟设备存在于数据库中
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        // 模拟更新返回 0，随后查询到 ACTIVE 设备
+        when(deviceMapper.updateHeartbeat("dev_conflict")).thenReturn(0);
+        when(deviceMapper.findByDeviceId("dev_conflict")).thenReturn(device);
+
+        // 调用 heartbeat，断言抛出携带 CONFLICT 的异常
+        DeviceService service = new DeviceService(deviceMapper);
+        ResponseStatusException exception  = assertThrows(
+                ResponseStatusException.class,
+                () -> service.heartbeat("dev_conflict")
+        );
+
+        // 验证409
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+
+        // 验证更新和查询各执行一次
+        verify(deviceMapper).findByDeviceId("dev_conflict");
+        verify(deviceMapper).updateHeartbeat("dev_conflict");
+    }
 }
 
