@@ -92,7 +92,10 @@ class DeviceServiceTest {
          * 构造器注入有利于单元测试：
          * - 依赖可以很方便地替换为模拟对象
          */
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         /**
          * 执行：调用注册方法，并断言它抛出异常。
@@ -167,7 +170,10 @@ class DeviceServiceTest {
         when(deviceMapper.insert(any(Device.class))).thenThrow(new DuplicateKeyException("模拟唯一键冲突"));
 
         // 准备：手动构造测试对象
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 执行代码
         ResponseStatusException exception = assertThrows(
@@ -207,7 +213,10 @@ class DeviceServiceTest {
         when(deviceMapper.findByFingerprint("install-active")).thenReturn(existing);
 
         // 准备：构造注入mapper
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 执行：调用注册方法，保存返回的响应 DTO
         DeviceRegisterResponse response = deviceService.register(request);
@@ -239,7 +248,10 @@ class DeviceServiceTest {
         when(deviceMapper.insert(any(Device.class))).thenReturn(1);
 
         // 准备：构造注入
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 执行
         DeviceRegisterResponse response = deviceService.register(request);
@@ -286,7 +298,10 @@ class DeviceServiceTest {
         when(deviceMapper.insert(any(Device.class))).thenThrow(oringinal);
 
         // 准备：注入构造
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 执行：使用actual保存代码执行过程中捕获的唯一键冲突
         DuplicateKeyException actual = assertThrows(DuplicateKeyException.class, () -> deviceService.register(request));
@@ -326,7 +341,10 @@ class DeviceServiceTest {
         when(deviceMapper.insert(any(Device.class))).thenThrow(DuplicateKeyException.class);
 
         // 5. 创建 Service，调用 register，取得响应
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
         DeviceRegisterResponse response = deviceService.register(request);
 
         // 6. 断言返回的 deviceId 为 dev_existing
@@ -346,7 +364,10 @@ class DeviceServiceTest {
         // 1. 模拟 revoke("dev_missing") 返回 0
         when(deviceMapper.revoke("dev_missing")).thenReturn(0);
 
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 2. 使用 assertThrows 调用 service.revoke("dev_missing")
         //    并保存返回的异常
@@ -372,7 +393,10 @@ class DeviceServiceTest {
         when(deviceMapper.revoke("dev_existing")).thenReturn(1);
 
         // 2. 创建 Service
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 3. 用 assertDoesNotThrow 验证撤销方法正常结束
         assertDoesNotThrow(() -> deviceService.revoke("dev_existing"));
@@ -393,7 +417,10 @@ class DeviceServiceTest {
         // 2. 模拟 findPageByOs(10, 0L, null) 返回空列表
         when(deviceMapper.findPageByOs(10, 0L, null)).thenReturn(List.of());    // 空列表不等于 null，而是List.of()
 
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 3. 调用 list(1, 10, "   ")，保存响应
         DeviceListPageResponse response = deviceService.list(1, 10, "   ");
@@ -419,7 +446,10 @@ class DeviceServiceTest {
         // 2. 模拟 findPageByOs(5, 10L, "Android") 返回空列表
         when(deviceMapper.findPageByOs(5, 10L, "Android")).thenReturn(List.of());
 
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 3. 调用 list(3, 5, "  Android  ")
         DeviceListPageResponse response = service.list(3, 5, "  Android   ");
@@ -441,7 +471,10 @@ class DeviceServiceTest {
      */
     @Test
     void invalidPageIsRejectedBeforeQueryingDatabase() {
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 1. 调用 list(0, 10, null)，断言抛出 ResponseStatusException
         ResponseStatusException exception = assertThrows(
@@ -472,7 +505,10 @@ class DeviceServiceTest {
             int page,
             int size
     ){
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -496,7 +532,10 @@ class DeviceServiceTest {
         when(deviceMapper.findPageByOs(100, 0L, null)).thenReturn(List.of());
 
         // 调用 list(1, 100, null)
-        DeviceService deviceService = new DeviceService(deviceMapper);
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
         DeviceListPageResponse response = deviceService.list(1, 100, null);
 
         // 检查响应 size 为 100
@@ -515,7 +554,10 @@ class DeviceServiceTest {
         // 1. 模拟 updateHeartbeat("dev_active") 返回 1
         when(deviceMapper.updateHeartbeat("dev_active")).thenReturn(1);
 
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 2. 执行心跳，确认正常结束：使用 assertDoesNotThrow 调用 heartbeat("dev_active")
         assertDoesNotThrow(() -> service.heartbeat("dev_active"));
@@ -540,7 +582,10 @@ class DeviceServiceTest {
         // 2. 模拟 findByDeviceId("dev_missing") 返回 null
         when(deviceMapper.findByDeviceId("dev_missing")).thenReturn(null);
 
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
 
         // 3. 使用 assertThrows 调用 heartbeat("dev_missing")
         //    保存 ResponseStatusException
@@ -572,7 +617,10 @@ class DeviceServiceTest {
         when(deviceMapper.findByDeviceId("dev_revocked")).thenReturn(existing);
 
         // 3. 创建 Service，调用 heartbeat，捕获异常
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> service.heartbeat("dev_revocked")
@@ -600,7 +648,10 @@ class DeviceServiceTest {
         when(deviceMapper.findByDeviceId("dev_conflict")).thenReturn(device);
 
         // 调用 heartbeat，断言抛出携带 CONFLICT 的异常
-        DeviceService service = new DeviceService(deviceMapper);
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator()
+        );
         ResponseStatusException exception  = assertThrows(
                 ResponseStatusException.class,
                 () -> service.heartbeat("dev_conflict")

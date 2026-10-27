@@ -24,6 +24,7 @@ public class DeviceService {
      * ans：DeviceService 正常运行时就应该依赖一个确定的 Mapper。使用 final 能明确表达这个依赖是必需的，不应该在对象创建后随意更换。
      */
     private final DeviceMapper deviceMapper;
+    private final DeviceConnectionCalculator deviceConnectionCalculator;
 
     /**
      * 构造方法
@@ -31,8 +32,11 @@ public class DeviceService {
      * 当 Spring 扫描到这个 Service，并且容器中存在可注入的 DeviceMapper Bean 时，Spring 就可以调用这个构造器，把 Mapper 传进来。
      * @param deviceMapper
      */
-    public DeviceService(DeviceMapper deviceMapper){
+    public DeviceService(
+            DeviceMapper deviceMapper,
+            DeviceConnectionCalculator deviceConnectionCalculator){
         this.deviceMapper = deviceMapper;
+        this.deviceConnectionCalculator = deviceConnectionCalculator;
     }
 
 
