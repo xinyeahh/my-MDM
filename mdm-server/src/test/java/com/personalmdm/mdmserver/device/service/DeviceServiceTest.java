@@ -505,5 +505,27 @@ class DeviceServiceTest {
         // 验证分页查询收到正确参数
         verify(deviceMapper).findPageByOs(100, 0L, null);
     }
+
+    /**
+     * 测试设备心跳获取接口
+     * verifyNoInteractions(mock) 检查整个模拟对象没有调用；verify(mock, never()).某方法(...) 检查特定方法没有调用。
+     */
+    @Test
+    void successfulHeartbeatDoesNotQueryDeviceAgain() {
+        // 1. 模拟 updateHeartbeat("dev_active") 返回 1
+        when(deviceMapper.updateHeartbeat("dev_active")).thenReturn(1);
+
+        DeviceService service = new DeviceService(deviceMapper);
+
+        // 2. 执行心跳，确认正常结束：使用 assertDoesNotThrow 调用 heartbeat("dev_active")
+        assertDoesNotThrow(() -> service.heartbeat("dev_active"));
+
+        // 3. 确认更新调用一次，且设备ID正确：验证 updateHeartbeat 收到了正确的设备 ID 参数
+        verify(deviceMapper).updateHeartbeat("dev_active");
+
+        // 4. 验证没有调用 findByDeviceId
+        verify(deviceMapper, never()).findByDeviceId("dev_active");
+        
+    }
 }
 
