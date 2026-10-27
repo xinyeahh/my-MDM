@@ -376,5 +376,19 @@ class DeviceControllerTest {
         verifyNoInteractions(deviceService);
     }
 
+    /**
+     * 设备心跳接口：确认心跳路径绑定正确，成功时返回 204
+     */
+    @Test
+    void successfulHeartbeatReturnsNoContent() throws Exception {
 
+        mockMvc.perform(
+                post("/device/{deviceId}/heartbeat", "dev_active")
+        )
+                // 成功返回 204
+                .andExpect(status().isNoContent());
+
+        // 验证心跳被调用一次
+        verify(deviceService).heartbeat("dev_active");
+    }
 }

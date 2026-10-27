@@ -587,7 +587,7 @@ class DeviceServiceTest {
     }
 
     /**
-     * 设备心跳获取接口：设备状态变化时返回409
+     * 设备心跳获取接口：更新失败但查询到激活设备时返回409
      */
     @Test
     void heartbeatReturnsConflictWhenUpdateFailsButDeviceIsActive() {
