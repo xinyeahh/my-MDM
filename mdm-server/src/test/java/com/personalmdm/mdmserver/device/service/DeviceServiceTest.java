@@ -2,6 +2,7 @@
 package com.personalmdm.mdmserver.device.service;
 
 // 测试所需的类
+import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceListPageResponse;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
 import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 // 静态导入：允许直接使用方法，不用每次都写完整的类名
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -664,5 +666,50 @@ class DeviceServiceTest {
         verify(deviceMapper).findByDeviceId("dev_conflict");
         verify(deviceMapper).updateHeartbeat("dev_conflict");
     }
+
+    /**
+     * 验证心跳时间确实传入计算器
+     * 补一个 Service 层的衔接测试，确认心跳时间确实传给了计算器，计算结果也进入详情 DTO。
+     *
+     * 编译器检查类型，测试可以进一步检查具体值和业务行为。
+     */
+    @Test
+    void deviceDetailIncludesCalculatedConnectionStatus() {
+        // 准备数据
+        LocalDateTime heartbeat = LocalDateTime.of(
+                2026, 10, 27, 10, 0
+        );
+
+        Device device = new Device();
+        device.setDeviceId("dev_existing");
+        device.setStatus(DeviceStatus.ACTIVE);
+        device.setLastHeartbeatTime(heartbeat);
+
+        DeviceConnectionCalculator calculator = mock(DeviceConnectionCalculator.class);
+
+        // 预设
+        when(deviceMapper.findByDeviceId("dev_existing")).thenReturn(device);
+
+        when(calculator.calculate(
+                eq(heartbeat),              // 第一个参数必须等于指定的心跳时间。
+                any(LocalDateTime.class)    // 第二个参数接受任意非空的当前时间
+        )).thenReturn(DeviceConnectionStatus.ONLINE);
+
+        // 执行
+        DeviceService service = new DeviceService(deviceMapper, calculator);
+
+        DeviceDetailResponse response = service.getDetail("dev_existing");
+
+        // 验证
+        assertEquals(heartbeat, response.lastHeartbeatTime());
+        assertEquals("ONLINE", response.connectionStatus());
+
+        verify(calculator).calculate(
+                eq(heartbeat),
+                any(LocalDateTime.class)
+        );
+
+    }
+
 }
 
