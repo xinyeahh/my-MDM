@@ -556,5 +556,34 @@ class DeviceServiceTest {
         verify(deviceMapper, times(1)).updateHeartbeat("dev_missing");
         verify(deviceMapper, times(1)).findByDeviceId("dev_missing");
     }
+
+    /**
+     * 设备心跳获取接口：设备已撤销时返回403
+     */
+    @Test
+    void heartbeatForRevokedDeviceReturnsForbidden() {
+        Device existing = new Device();
+        existing.setStatus(DeviceStatus.REVOKED);
+
+        // 1. 模拟 updateHeartbeat("dev_revoked") 返回 0
+        when(deviceMapper.updateHeartbeat("dev_revocked")).thenReturn(0);
+
+        // 2. 模拟 findByDeviceId("dev_revoked") 返回 existing
+        when(deviceMapper.findByDeviceId("dev_revocked")).thenReturn(existing);
+
+        // 3. 创建 Service，调用 heartbeat，捕获异常
+        DeviceService service = new DeviceService(deviceMapper);
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.heartbeat("dev_revocked")
+        );
+
+        // 4. 断言异常状态为 FORBIDDEN
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        // 5. 验证更新和查询各调用一次，参数正确
+        verify(deviceMapper).findByDeviceId("dev_revocked");
+        verify(deviceMapper).updateHeartbeat("dev_revocked");
+    }
 }
 
