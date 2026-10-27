@@ -169,7 +169,7 @@ public class DeviceService {
         // 如果设备存在，则返回设备详情
         DeviceConnectionStatus connectionStatus = deviceConnectionCalculator.calculate(
                 device.getLastHeartbeatTime(),
-                LocalDateTime.now()
+                LocalDateTime.now(clock)
         );
         return new DeviceDetailResponse(
                 device.getDeviceId(),

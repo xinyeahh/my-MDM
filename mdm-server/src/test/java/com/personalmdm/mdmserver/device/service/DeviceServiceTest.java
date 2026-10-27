@@ -22,7 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 // 静态导入：允许直接使用方法，不用每次都写完整的类名
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -727,6 +729,81 @@ class DeviceServiceTest {
                 any(LocalDateTime.class)
         );
 
+    }
+
+    /**
+     * 设备在线状态验证
+     * 用固定时钟和真实计算器，验证详情接口在恰好两分钟时返回 ONLINE。
+     */
+    @Test
+    void detailIsOnlineExactlyTwoMinutesAfterHeartbeat() {
+        // 准备-固定时钟：UTC时间02：02+上海时区=当地时间10：02
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-27T02:02:00Z"),  // 表示 UTC 时间 02:02
+                ZoneId.of("Asia/Shanghai")            // 表示结合上海时区
+        );
+
+        // 准备-设备
+        Device device = new Device();
+        device.setDeviceId("dev_existing");
+        device.setStatus(DeviceStatus.ACTIVE);
+        device.setLastHeartbeatTime(
+                LocalDateTime.of(2026, 10, 27, 10, 0)
+        );
+
+        // 预设-查询设备id返回device
+        when(deviceMapper.findByDeviceId("dev_existing")).thenReturn(device);
+
+        // 初始化服务层
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                clock
+        );
+
+        DeviceDetailResponse response = deviceService.getDetail("dev_existing");
+
+        // 判断-设备在线
+        assertEquals("ONLINE", response.connectionStatus());
+        // 判断-设备最后一次心跳时间正确
+        assertEquals(
+                device.getLastHeartbeatTime(),
+                response.lastHeartbeatTime()
+        );
+
+    }
+
+    @Test
+    void detailIsOfflineTwoMinutesOneNanoAfterHeartbeat() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-27T02:02:01Z"),
+                ZoneId.of("Asia/Shanghai")
+        );
+
+        // 准备-设备
+        Device device = new Device();
+        device.setDeviceId("dev_existing");
+        device.setStatus(DeviceStatus.ACTIVE);
+        device.setLastHeartbeatTime(
+                LocalDateTime.of(
+                        2026, 10, 27, 10, 0
+                )
+        );
+
+        // 预设
+        when(deviceMapper.findByDeviceId("dev_existing")).thenReturn(device);
+
+        // 初始化服务器
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                clock
+        );
+
+        DeviceDetailResponse response = deviceService.getDetail("dev_existing");
+
+        assertEquals("OFFLINE", response.connectionStatus());
+        assertEquals(device.getLastHeartbeatTime(), response.lastHeartbeatTime());
     }
 
 }
