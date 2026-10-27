@@ -3,6 +3,8 @@ package com.personalmdm.mdmserver.device.controller;
 import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -23,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @WebMvcTest(DeviceController.class) // 加载Controller及相关MVC测试环境
 class DeviceControllerTest {
@@ -390,5 +391,31 @@ class DeviceControllerTest {
 
         // 验证心跳被调用一次
         verify(deviceService).heartbeat("dev_active");
+    }
+
+    /**
+     * 设备心跳接口
+     * 参数化测试：验证三种异常都能转换成对应的HTTP状态码
+     */
+    @ParameterizedTest
+    @CsvSource({
+            "404",
+            "403",
+            "409"
+    })
+    void heartbeatFailureReturnsExpectedStatus(int statusCode) throws Exception {
+        // 预设：当调用心跳接口的时候抛出错误状态编码
+        doThrow(new ResponseStatusException(
+                HttpStatus.valueOf(statusCode),
+                "模拟心跳失败"
+        ))
+                .when(deviceService)
+                .heartbeat("dev_failure");
+
+        mockMvc.perform(
+                post("/device/{deviceId}/heartbeat", "dev_failure")
+        ).andExpect(status().is(statusCode));
+
+        verify(deviceService).heartbeat("dev_failure");
     }
 }
