@@ -236,7 +236,9 @@ class DeviceControllerTest {
                 "Android",
                 "15",
                "ACTIVE",
-                LocalDateTime.of(2026, 10, 23, 10, 0)
+                LocalDateTime.of(2026, 10, 23, 10, 0),
+                null,
+                "UNKNOWN"
         );
 
         // 1. 模拟 getDetail("dev_existing") 返回 detail
@@ -258,7 +260,11 @@ class DeviceControllerTest {
                  */
                 .andExpect(jsonPath("$.deviceId").value("dev_existing"))
                 .andExpect(jsonPath("$.deviceName").value("测试设备"))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.connectionStatus").value("UNKNOWN"))
+                .andExpect(jsonPath("$.lastHeartbeatTime").value(
+                        org.hamcrest.Matchers.nullValue()
+                ));
 
         /**
          * 5. 验证 Service 收到了正确的设备 ID

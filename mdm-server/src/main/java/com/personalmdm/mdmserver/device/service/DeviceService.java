@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +32,7 @@ public class DeviceService {
      * 构造器注入：Spring 创建 DeviceService 时，把 MyBatis 提供的 DeviceMapper 对象传进来。只有一个构造方法时，无须写 @Autowired。
      * 当 Spring 扫描到这个 Service，并且容器中存在可注入的 DeviceMapper Bean 时，Spring 就可以调用这个构造器，把 Mapper 传进来。
      * @param deviceMapper
+     * @param deviceConnectionCalculator 设备在线状态计算器
      */
     public DeviceService(
             DeviceMapper deviceMapper,
@@ -160,6 +162,10 @@ public class DeviceService {
         }
 
         // 如果设备存在，则返回设备详情
+        DeviceConnectionStatus connectionStatus = deviceConnectionCalculator.calculate(
+                device.getLastHeartbeatTime(),
+                LocalDateTime.now()
+        );
         return new DeviceDetailResponse(
                 device.getDeviceId(),
                 device.getDeviceName(),
@@ -167,7 +173,9 @@ public class DeviceService {
                 device.getOs(),
                 device.getOsVersion(),
                 device.getStatus().name(),
-                device.getCreateTime()
+                device.getCreateTime(),
+                device.getLastHeartbeatTime(),
+                connectionStatus.name()
         );
     }
 
