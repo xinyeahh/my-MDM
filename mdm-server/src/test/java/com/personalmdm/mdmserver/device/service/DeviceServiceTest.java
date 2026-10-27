@@ -525,7 +525,36 @@ class DeviceServiceTest {
 
         // 4. 验证没有调用 findByDeviceId
         verify(deviceMapper, never()).findByDeviceId("dev_active");
-        
+
+    }
+
+
+    /**
+     * 设备心跳接口：设备不存在时返回404
+     */
+    @Test
+    void heartbeatForMissingDeviceReturnsNotFound() {
+        // 1. 模拟 updateHeartbeat("dev_missing") 返回 0
+        when(deviceMapper.updateHeartbeat("dev_missing")).thenReturn(0);
+
+        // 2. 模拟 findByDeviceId("dev_missing") 返回 null
+        when(deviceMapper.findByDeviceId("dev_missing")).thenReturn(null);
+
+        DeviceService service = new DeviceService(deviceMapper);
+
+        // 3. 使用 assertThrows 调用 heartbeat("dev_missing")
+        //    保存 ResponseStatusException
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.heartbeat("dev_missing")
+        );
+
+        // 4. 检查异常状态为 NOT_FOUND
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        // 5. 验证更新和查询分别被调用一次，参数均为 dev_missing
+        verify(deviceMapper, times(1)).updateHeartbeat("dev_missing");
+        verify(deviceMapper, times(1)).findByDeviceId("dev_missing");
     }
 }
 
