@@ -453,4 +453,24 @@ class DeviceControllerTest {
 
     }
 
+    /**
+     * 分页查询设备列表：状态字段条件传入非法值的时候抛出400
+     */
+    @Test
+    void invalidStatusReturnsBadRequest() throws Exception {
+        // 执行
+        mockMvc.perform(
+                get("/device")
+                        .param("os", "Android")
+                        .param("status", "INVALID")
+        )
+                // 断言 HTTP 400
+                .andExpect(status().isBadRequest());
+
+
+
+        // 验证service没有被调用
+        verifyNoInteractions(deviceService);
+    }
+
 }
