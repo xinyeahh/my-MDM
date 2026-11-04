@@ -1,6 +1,7 @@
 package com.personalmdm.mdmserver.device.controller;
 
 import com.personalmdm.mdmserver.device.dto.*;
+import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -424,4 +425,32 @@ class DeviceControllerTest {
 
         verify(deviceService).heartbeat("dev_failure");
     }
+
+    /**
+     * 设备分页查询：验证能够正确接收状态枚举
+     */
+    @Test
+    void listingDevicesPassesStatusFilter() throws Exception {
+        // 准备：声明分页查询设备列表响应DTO
+        DeviceListPageResponse page = new DeviceListPageResponse(
+                1, 10, 0L, List.of()
+        );
+
+        // 准备：预设查询返回空列表页面page
+        when(deviceService.list(1, 10, "Android", DeviceStatus.REVOKED)).thenReturn(page);
+
+        // 执行
+        mockMvc.perform(
+                get("/device")
+                        .param("os", "Android")
+                        .param("status", "REVOKED")
+        ).andExpect(status().isOk());
+
+        // 验证：调用了分页查询设备列表服务，并且使用的是指定参数
+        verify(deviceService).list(
+                1, 10, "Android", DeviceStatus.REVOKED
+        );
+
+    }
+
 }
