@@ -88,22 +88,7 @@ public interface DeviceMapper {
     long countAll();
 
 
-    /**
-     * 页码查询设备列表
-     */
-    @Select("""
-            select id, device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
-            from device
-            order by id desc
-            limit #{size}
-            offset #{offset}
-            """)
-    List<Device> findPage(
-            @Param("size")
-            int size,
-            @Param("offset")
-            long offset
-    );
+
 
     /**
      * 查询设备总数
@@ -126,35 +111,6 @@ public interface DeviceMapper {
             </script>
             """)
     long countAllByOs(
-            @Param("os")
-            String os
-    );
-
-    /**
-     * 页码查询设备列表
-     * 注意：分页总数和列表必须使用相同的筛选条件
-     * 查询条件：os
-     * 动态sql
-     */
-    @Select("""
-            <script>
-            select id, device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
-            from device
-            <where>
-                <if test="os != null">
-                    os = #{os}
-                </if>
-            </where>
-            order by id desc
-            limit #{size}
-            offset #{offset}
-            </script>
-            """)
-    List<Device> findPageByOs(
-            @Param("size")
-            int size,
-            @Param("offset")
-            long offset,
             @Param("os")
             String os
     );
