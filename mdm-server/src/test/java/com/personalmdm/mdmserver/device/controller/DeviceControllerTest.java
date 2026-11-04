@@ -314,7 +314,7 @@ class DeviceControllerTest {
         );
 
         // 1. 模拟 list(1, 10, null) 返回 page
-        when(deviceService.list(1, 10, null))
+        when(deviceService.list(1, 10, null, null))
                 .thenReturn(page);
 
         // 2. 发送 GET /device
@@ -333,7 +333,7 @@ class DeviceControllerTest {
 
 
         // 6. 验证 Service 收到 list(1, 10, null)
-        verify(deviceService).list(1,10,null);
+        verify(deviceService).list(1,10,null, null);
     }
 
     /**
@@ -349,7 +349,7 @@ class DeviceControllerTest {
         );
 
         // 1. 模拟 list(2, 5, "Android") 返回 page
-        when(deviceService.list(2,5,"Android")).thenReturn(page);
+        when(deviceService.list(2,5,"Android",null)).thenReturn(page);
 
         // 2. 发送 GET /device，并用 .param(...) 设置三个查询参数
         mockMvc.perform(
@@ -363,7 +363,7 @@ class DeviceControllerTest {
                 .andExpect(jsonPath("$.page").value(2))
                 .andExpect(jsonPath("$.size").value(5));
         // 4. 验证 Service 收到 list(2, 5, "Android")
-        verify(deviceService).list(2,5,"Android");
+        verify(deviceService).list(2,5,"Android",null);
     }
 
     /**

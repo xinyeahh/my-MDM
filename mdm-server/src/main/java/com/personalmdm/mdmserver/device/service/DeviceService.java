@@ -190,7 +190,7 @@ public class DeviceService {
      * @param size  单词实际返回的条数
      * @return      设备列表页面响应 DTO
      */
-    public DeviceListPageResponse list(int page, int size, String os){
+    public DeviceListPageResponse list(int page, int size, String os, DeviceStatus status){
         // 参数合法性校验
         if(page < 1 || size < 1 || size > 100){
             throw new ResponseStatusException(
@@ -219,10 +219,10 @@ public class DeviceService {
         // 注意：分页总数和列表必须使用相同的筛选条件
 
         // 设备总数
-        long total = deviceMapper.countAllByOs(normalizedOs);
+        long total = deviceMapper.countAllByOsAndStatus(normalizedOs,status);
 
         // 设备列表获取
-        List<Device> deviceList = deviceMapper.findPageByOs(size, offset, normalizedOs);
+        List<Device> deviceList = deviceMapper.findPageByOsAndStatus(size, offset, normalizedOs, status);
 
         // 设备列表包装成 设备列表条目响应 DTO 列表
         List<DeviceListItemResponse> items = new ArrayList<>();

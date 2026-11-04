@@ -425,10 +425,10 @@ class DeviceServiceTest {
     @Test
     void blankOsIsTreatedAsNoFilter() {
         // 1. 模拟 countAllByOs(null) 返回 0L
-        when(deviceMapper.countAllByOs(null)).thenReturn(0L);
+        when(deviceMapper.countAllByOsAndStatus(null,null)).thenReturn(0L);
 
         // 2. 模拟 findPageByOs(10, 0L, null) 返回空列表
-        when(deviceMapper.findPageByOs(10, 0L, null)).thenReturn(List.of());    // 空列表不等于 null，而是List.of()
+        when(deviceMapper.findPageByOsAndStatus(10, 0L, null,null)).thenReturn(List.of());    // 空列表不等于 null，而是List.of()
 
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
@@ -437,15 +437,15 @@ class DeviceServiceTest {
         );
 
         // 3. 调用 list(1, 10, "   ")，保存响应
-        DeviceListPageResponse response = deviceService.list(1, 10, "   ");
+        DeviceListPageResponse response = deviceService.list(1, 10, "   ",null);
 
         // 4. 断言 total 为 0，items 为空
         assertEquals(0L, response.total());
         assertTrue(response.items().isEmpty());
 
         // 5. 验证两次 Mapper 调用收到的筛选值都是 null
-        verify(deviceMapper).countAllByOs(null);
-        verify(deviceMapper).findPageByOs(10, 0L, null);
+        verify(deviceMapper).countAllByOsAndStatus(null,null);
+        verify(deviceMapper).findPageByOsAndStatus(10, 0L, null,null);
     }
 
     /**
@@ -455,10 +455,10 @@ class DeviceServiceTest {
     @Test
     void listingDevicesCalculatesOffsetAndTrimsOs() {
         // 1. 模拟 countAllByOs("Android") 返回 12L
-        when(deviceMapper.countAllByOs("Android")).thenReturn(12L);
+        when(deviceMapper.countAllByOsAndStatus("Android",null)).thenReturn(12L);
 
         // 2. 模拟 findPageByOs(5, 10L, "Android") 返回空列表
-        when(deviceMapper.findPageByOs(5, 10L, "Android")).thenReturn(List.of());
+        when(deviceMapper.findPageByOsAndStatus(5, 10L, "Android",null)).thenReturn(List.of());
 
         DeviceService service = new DeviceService(
                 deviceMapper,
@@ -467,7 +467,7 @@ class DeviceServiceTest {
         );
 
         // 3. 调用 list(3, 5, "  Android  ")
-        DeviceListPageResponse response = service.list(3, 5, "  Android   ");
+        DeviceListPageResponse response = service.list(3, 5, "  Android   ",null);
 
         // 4. 检查响应 page=3、size=5、total=12
         assertEquals(3, response.page());
@@ -475,8 +475,8 @@ class DeviceServiceTest {
         assertEquals(12, response.total());
 
         // 5. 验证两条 Mapper 查询的参数
-        verify(deviceMapper).countAllByOs("Android");
-        verify(deviceMapper).findPageByOs(5, 10L, "Android");
+        verify(deviceMapper).countAllByOsAndStatus("Android",null);
+        verify(deviceMapper).findPageByOsAndStatus(5, 10L, "Android",null);
 
     }
 
@@ -495,7 +495,7 @@ class DeviceServiceTest {
         // 1. 调用 list(0, 10, null)，断言抛出 ResponseStatusException
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> service.list(0, 10, null)
+                () -> service.list(0, 10, null,null)
         );
 
         // 2. 检查异常状态为 BAD_REQUEST
@@ -529,7 +529,7 @@ class DeviceServiceTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> service.list(page, size, null)
+                () -> service.list(page, size, null,null)
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
@@ -543,10 +543,10 @@ class DeviceServiceTest {
     @Test
     void maximumPageSizeIsAccepted() {
         // 模拟 countAllByOs(null) 返回 0L
-        when(deviceMapper.countAllByOs(null)).thenReturn(0L);
+        when(deviceMapper.countAllByOsAndStatus(null,null)).thenReturn(0L);
 
         // 模拟 findPageByOs(100, 0L, null) 返回空列表
-        when(deviceMapper.findPageByOs(100, 0L, null)).thenReturn(List.of());
+        when(deviceMapper.findPageByOsAndStatus(100, 0L, null,null)).thenReturn(List.of());
 
         // 调用 list(1, 100, null)
         DeviceService deviceService = new DeviceService(
@@ -554,13 +554,13 @@ class DeviceServiceTest {
                 new DeviceConnectionCalculator(),
                 Clock.systemDefaultZone()
         );
-        DeviceListPageResponse response = deviceService.list(1, 100, null);
+        DeviceListPageResponse response = deviceService.list(1, 100, null,null);
 
         // 检查响应 size 为 100
         assertEquals(100, response.size());
 
         // 验证分页查询收到正确参数
-        verify(deviceMapper).findPageByOs(100, 0L, null);
+        verify(deviceMapper).findPageByOsAndStatus(100, 0L, null,null);
     }
 
     /**
@@ -773,6 +773,9 @@ class DeviceServiceTest {
 
     }
 
+    /**
+     * 设备离线状态验证
+     */
     @Test
     void detailIsOfflineTwoMinutesOneNanoAfterHeartbeat() {
         Clock clock = Clock.fixed(
@@ -805,6 +808,8 @@ class DeviceServiceTest {
         assertEquals("OFFLINE", response.connectionStatus());
         assertEquals(device.getLastHeartbeatTime(), response.lastHeartbeatTime());
     }
+
+
 
 }
 

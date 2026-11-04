@@ -1,6 +1,7 @@
 package com.personalmdm.mdmserver.device.controller;
 
 import com.personalmdm.mdmserver.device.dto.*;
+import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import com.personalmdm.mdmserver.device.service.DeviceService;
 import jakarta.validation.Valid;
@@ -91,9 +92,11 @@ public class DeviceController {
             @RequestParam(name = "size", defaultValue = "10")
             int size,
             @RequestParam(name = "os", required = false)    // required = false 表示参数可以省略，省略时这里收到 null。
-            String os
+            String os,
+            @RequestParam(name = "status", required = false)    // 直接接收枚举，这样spring会尝试把请求文本转换成DeviceStatus，无法转换的值会在进入Service之前被拒绝
+            DeviceStatus status
     ){
-        return deviceService.list(page, size, os);
+        return deviceService.list(page, size, os, status);
     }
 
     /**

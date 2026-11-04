@@ -2,6 +2,7 @@ package com.personalmdm.mdmserver.device.mapper;
 
 import com.personalmdm.mdmserver.device.dto.DeviceListItemResponse;
 import com.personalmdm.mdmserver.device.entity.Device;
+import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -164,7 +165,7 @@ public interface DeviceMapper {
      */
     @Update("""
             update device
-            set status = 'REVOKE'
+            set status = 'REVOKED'
             where device_id = #{deviceId}
             """)
     int revoke(
@@ -172,10 +173,77 @@ public interface DeviceMapper {
             String deviceId
     );
 
+    /**
+     * 获取设备心跳
+     * @param deviceId
+     * @return
+     */
     @Update("""
             update device
             set last_heartbeat_time = current_timestamp(6)
             where device_id=#{deviceId} and status='ACTIVE'
             """)
     int updateHeartbeat(@Param("deviceId") String deviceId);
+
+
+    /**
+     * 页码查询设备列表
+     * 注意：分页总数和列表必须使用相同的筛选条件
+     * 查询条件：os;status
+     * 动态sql
+     * <where> 会自动去掉开头多余的 AND，所以可以组合出四种查询：不筛选、只筛选系统、只筛选状态、同时筛选两者。
+     */
+    @Select("""
+            <script>
+            select id, device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
+            from device
+            <where>
+                <if test="os != null">
+                    and os = #{os}
+                </if>
+                <if test="status != null">
+                 and status = #{status}
+                </if>
+            </where>
+            order by id desc
+            limit #{size}
+            offset #{offset}
+            </script>
+            """)
+    List<Device> findPageByOsAndStatus(
+            @Param("size")
+            int size,
+            @Param("offset")
+            long offset,
+            @Param("os")
+            String os,
+            @Param("status")
+            DeviceStatus status
+    );
+
+    /**
+     * 查询设备总数
+     * 注意：分页总数和列表必须使用相同的筛选条件
+     * 查询条件：os;status
+     */
+    @Select("""
+            <script>
+            select count(*)
+            from device
+            <where>
+                <if test="os != null">
+                    and os = #{os}
+                </if>
+                <if test="status != null">
+                 and status = #{status}
+                </if>
+            </where>
+            </script>
+            """)
+    long countAllByOsAndStatus(
+            @Param("os")
+            String os,
+            @Param("status")
+            DeviceStatus status
+    );
 }

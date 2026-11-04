@@ -214,18 +214,18 @@ public class DeviceMapperIntegrationTest {
         deviceMapper.insert(third);
 
         // 2. 查询 Android 设备总数，预期为 2
-        long total = deviceMapper.countAllByOs("Android");
+        long total = deviceMapper.countAllByOsAndStatus("Android", null);
         assertEquals(2L, total);
 
         // 3. 查询 Android 第一页，每页 1 条，offset 为 0
         //    预期只有“Android新设备”
-        List<Device> thirdDevice = deviceMapper.findPageByOs(1, 0L, "Android");
+        List<Device> thirdDevice = deviceMapper.findPageByOsAndStatus(1, 0L, "Android", null);
         assertEquals(1,thirdDevice.size());
         assertEquals("设备3", thirdDevice.getFirst().getDeviceName());
 
         // 4. 查询 Android 第二页，每页 1 条，offset 为 1
         //    预期只有“Android旧设备”
-        List<Device> firstDevice = deviceMapper.findPageByOs(1, 1L, "Android");
+        List<Device> firstDevice = deviceMapper.findPageByOsAndStatus(1, 1L, "Android", null);
         assertEquals(1,firstDevice.size());
         assertEquals("设备1", firstDevice.getFirst().getDeviceName());
 
