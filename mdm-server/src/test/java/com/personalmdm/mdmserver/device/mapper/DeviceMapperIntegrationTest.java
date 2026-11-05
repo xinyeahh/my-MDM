@@ -297,19 +297,39 @@ public class DeviceMapperIntegrationTest {
         deviceMapper.insert(androidRevoked);
         deviceMapper.insert(iOSRevoked);
 
-        // 1. 调用 countAllByOsAndStatus，筛选 Android + REVOKED
-        //    断言总数为 1L
+        // 1. 调用 countAllByOsAndStatus
+        //    筛选 Android + REVOKED,断言总数为 1L
         long row = deviceMapper.countAllByOsAndStatus("Android", DeviceStatus.REVOKED);
         assertEquals(1L, row);
+        //    筛选 null + REVOKED，断言总数为2L
+        long row1 = deviceMapper.countAllByOsAndStatus(null, DeviceStatus.REVOKED);
+        assertEquals(2L, row1);
+
 
         // 2. 调用 findPageByOsAndStatus
-        //    size=10、offset=0L，使用同样的筛选条件
+        //    size=10、offset=0L，使用同样的筛选条件,断言列表只有一条记录，这条记录的 deviceId 等于 revokedAndroid 的 deviceId
         List<Device> deviceList= deviceMapper.findPageByOsAndStatus(10, 0L, "Android", DeviceStatus.REVOKED);
-
-        // 3. 断言列表只有一条记录
         assertEquals(1, deviceList.size());
-
-        // 4. 断言这条记录的 deviceId 等于 revokedAndroid 的 deviceId
         assertEquals(androidRevoked.getDeviceId(), deviceList.getFirst().getDeviceId());
+
+        //    size=10、offset=0L，使用同样的筛选条件,断言列表有2条记录，两条记录的状态都是撤销状态
+        List<Device> deviceList1= deviceMapper.findPageByOsAndStatus(10, 0L, null, DeviceStatus.REVOKED);
+        assertEquals(2, deviceList1.size());
+        assertTrue( // 断言结果必须为true
+                // 让列表中的设备参与诸葛检查
+                deviceList1.stream()
+                        /**
+                         * allMatch检查集合中的每个元素，是否都满足指定条件.只有全部满足才会全部返回true
+                         * 边界：
+                            * 如果查询出问题返回的是空列表，allamtch仍然会返回true
+                            * 因为列表中没有违反条件的设备，所以前一个判断列表数量（是否有预期的设备）的断言非常重要
+                         */
+                        .allMatch(
+                                // 描述检查规则
+                                device  // 代表当前正在检查的一台设备
+                                ->
+                                device.getStatus() == DeviceStatus.REVOKED  // 判断这台设备的状态是否是REVOKED
+                        )
+        );
     }
 }
