@@ -275,4 +275,41 @@ public class DeviceMapperIntegrationTest {
         assertNotNull(after);
         assertNull(after.getLastHeartbeatTime());
     }
+
+    /**
+     * 分页查询设备列表
+     * 系统和状态两个条件都同时满足
+     */
+    @Test
+    @Transactional
+    void  filteringByOsAndStatusReturnOnlyMatchingDevices(){
+        // 创建三台设备
+        Device androidActive = createDevice("androidActive", "Android");
+
+        Device androidRevoked= createDevice("androidRevoked", "Android");
+        androidRevoked.setStatus(DeviceStatus.REVOKED);
+
+        Device iOSRevoked = createDevice("iOSRevoked", "iOS");
+        iOSRevoked.setStatus(DeviceStatus.REVOKED);
+
+        // 存入数据库
+        deviceMapper.insert(androidActive);
+        deviceMapper.insert(androidRevoked);
+        deviceMapper.insert(iOSRevoked);
+
+        // 1. 调用 countAllByOsAndStatus，筛选 Android + REVOKED
+        //    断言总数为 1L
+        long row = deviceMapper.countAllByOsAndStatus("Android", DeviceStatus.REVOKED);
+        assertEquals(1L, row);
+
+        // 2. 调用 findPageByOsAndStatus
+        //    size=10、offset=0L，使用同样的筛选条件
+        List<Device> deviceList= deviceMapper.findPageByOsAndStatus(10, 0L, "Android", DeviceStatus.REVOKED);
+
+        // 3. 断言列表只有一条记录
+        assertEquals(1, deviceList.size());
+
+        // 4. 断言这条记录的 deviceId 等于 revokedAndroid 的 deviceId
+        assertEquals(androidRevoked.getDeviceId(), deviceList.getFirst().getDeviceId());
+    }
 }
