@@ -316,12 +316,12 @@ public class DeviceMapperIntegrationTest {
         List<Device> deviceList1= deviceMapper.findPageByOsAndStatus(10, 0L, null, DeviceStatus.REVOKED);
         assertEquals(2, deviceList1.size());
         assertTrue( // 断言结果必须为true
-                // 让列表中的设备参与诸葛检查
+                // 让列表中的设备参与逐个检查
                 deviceList1.stream()
                         /**
                          * allMatch检查集合中的每个元素，是否都满足指定条件.只有全部满足才会全部返回true
                          * 边界：
-                            * 如果查询出问题返回的是空列表，allamtch仍然会返回true
+                            * 如果查询出问题返回的是空列表，allmatch仍然会返回true
                             * 因为列表中没有违反条件的设备，所以前一个判断列表数量（是否有预期的设备）的断言非常重要
                          */
                         .allMatch(
