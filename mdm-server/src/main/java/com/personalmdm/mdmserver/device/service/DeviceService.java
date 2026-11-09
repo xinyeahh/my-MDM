@@ -180,7 +180,8 @@ public class DeviceService {
                 device.getStatus().name(),
                 device.getCreateTime(),
                 device.getLastHeartbeatTime(),
-                connectionStatus.name()
+                connectionStatus.name(),
+                device.getGroupId()
         );
     }
 

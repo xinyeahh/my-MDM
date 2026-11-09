@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
  * @param createTime        创建时间
  * @param lastHeartbeatTime 设备最近一次心跳时间
  * @param connectionStatus  设备在线状态
+ * @param groupId          设备组ID（外键）
  */
 public record DeviceDetailResponse(
         String deviceId,
@@ -23,7 +24,8 @@ public record DeviceDetailResponse(
         String status,
         LocalDateTime createTime,
         LocalDateTime lastHeartbeatTime,
-        String connectionStatus
+        String connectionStatus,
+        Long groupId
 ) {
 
 }

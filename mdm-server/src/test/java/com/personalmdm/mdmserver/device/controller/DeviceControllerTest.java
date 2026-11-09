@@ -239,7 +239,8 @@ class DeviceControllerTest {
                "ACTIVE",
                 LocalDateTime.of(2026, 10, 23, 10, 0),
                 null,
-                "UNKNOWN"
+                "UNKNOWN",
+                null
         );
 
         // 1. 模拟 getDetail("dev_existing") 返回 detail

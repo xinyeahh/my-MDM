@@ -63,6 +63,12 @@ public class Device {
      */
     private  LocalDateTime lastHeartbeatTime;
 
+    /**
+     * 设备组 ID：关联设备组表的内部主键
+     * @return
+     */
+    private Long groupId;
+
 
     public Long getId() {
         return id;
@@ -142,5 +148,13 @@ public class Device {
 
     public void setLastHeartbeatTime(LocalDateTime lastHeartbeatTime) {
         this.lastHeartbeatTime = lastHeartbeatTime;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 }

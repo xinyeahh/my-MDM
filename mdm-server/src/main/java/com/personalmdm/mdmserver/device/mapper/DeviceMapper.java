@@ -69,7 +69,7 @@ public interface DeviceMapper {
      * 用途：查询设备详情
      */
     @Select("""
-            select device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time
+            select device_id, device_name, model, os, os_version, status, create_time, last_heartbeat_time, group_id
             from device
             where device_id = #{deviceId}
             """)
