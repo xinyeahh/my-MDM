@@ -12,7 +12,10 @@ create table device_group (
     create_time datetime(6) not null default current_timestamp(6),
 
     # 指定id为主键
-    primary key (id)
+    primary key (id),
+
+    # 设备组名称唯一
+    unique key uk_device_group_group_name(group_name)
 )
     engine = InnoDB
     default character set = utf8mb4;
