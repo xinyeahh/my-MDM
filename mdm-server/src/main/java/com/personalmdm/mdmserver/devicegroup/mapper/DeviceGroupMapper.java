@@ -1,13 +1,16 @@
 package com.personalmdm.mdmserver.devicegroup.mapper;
 
 import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface DeviceGroupMapper {
 
+    /**
+     * 创建设备组
+     * @param group 插入设备组
+     * @return
+     */
     @Insert("""
             insert into device_group (group_name)
             values (#{groupName})
@@ -19,4 +22,19 @@ public interface DeviceGroupMapper {
             keyProperty = "id"
     )
     int insert(DeviceGroup group);
+
+    /**
+     * 设备组名称是否已存在检查
+     * @param groupName
+     * @return
+     */
+    @Select("""
+            select id, group_name
+            from device_group
+            where group_name = #{groupName}
+            """)
+    DeviceGroup findByGroupName(
+            @Param("groupName")
+            String groupName
+    );
 }
