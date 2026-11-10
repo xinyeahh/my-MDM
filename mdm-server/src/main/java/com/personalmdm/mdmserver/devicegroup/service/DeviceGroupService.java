@@ -30,7 +30,7 @@ public class DeviceGroupService {
     public DeviceGroupCreateResponse create(DeviceGroupCreateRequest request) {
 
         // 对创建的设备组名称进行格式化处理，删除名称中的空格
-        String groupName = request.groupName().strip();
+        String groupName = request.groupName().strip(); // strip()只去掉首尾的空白
 
         // 创建设备组实体对象
         DeviceGroup deviceGroup = new DeviceGroup();
