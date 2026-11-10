@@ -8,6 +8,9 @@ create table device_group (
     # 设备组名称
     group_name varchar(100) not null,
 
+    # 创建时间
+    create_time datetime(6) not null default current_timestamp(6),
+
     # 指定id为主键
     primary key (id)
 )
