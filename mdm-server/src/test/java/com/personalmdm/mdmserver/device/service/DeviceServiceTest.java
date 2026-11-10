@@ -2,10 +2,7 @@
 package com.personalmdm.mdmserver.device.service;
 
 // 测试所需的类
-import com.personalmdm.mdmserver.device.dto.DeviceDetailResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceListPageResponse;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterRequest;
-import com.personalmdm.mdmserver.device.dto.DeviceRegisterResponse;
+import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
@@ -809,7 +806,37 @@ class DeviceServiceTest {
         assertEquals(device.getLastHeartbeatTime(), response.lastHeartbeatTime());
     }
 
+    /**
+     * 检验设备注册：设备插入失败情况下的处理
+     */
+    @Test
+    void newDeviceRegistersInsertFail() {
+        // 准备数据
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-27T02:02:01Z"),
+                ZoneId.of("Asia/Shanghai")
+        );
+        DeviceRegisterRequest request = new DeviceRegisterRequest();
+        request.setFingerprint("dev_new_fingerprint");
 
+        when(deviceMapper.findByFingerprint("dev_new_fingerprint")).thenReturn(null);
+        when(deviceMapper.insert(any(Device.class))).thenReturn(0);
+
+        DeviceService service = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                clock
+        );
+
+        // `assertThrows` 已经会检查异常是否抛出
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.register(request)
+        );
+
+        verify(deviceMapper).findByFingerprint("dev_new_fingerprint");
+        verify(deviceMapper).insert(any(Device.class));
+    }
 
 }
 

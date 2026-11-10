@@ -47,7 +47,11 @@ public class DeviceGroupService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "设备组名称已存在！", e);
         }
 
-        // 设备组插入异常情况处理
+        /**
+         * 设备组插入异常情况处理
+         * 由于设备组需要设备组id来构造成功响应，而就算插入成功，myBatis也有没把主键协会Java对象的风险，所以要额外检查设备组id是否为空
+         *
+         */
         if (rows != 1 || deviceGroup.getId() == null) {
             throw new IllegalStateException("创建设备组后未取得有效的插入结果");
         }

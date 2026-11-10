@@ -92,9 +92,10 @@ public class DeviceService {
          * 3. 查询记录，说明已有对应注册身份，返回它
          * 4. 查不到就重新抛出原异常
          */
+        int rows;
         try {
             // 将设备插入数据库，插入本身就是原子操作
-            deviceMapper.insert(device);
+            rows = deviceMapper.insert(device);
         }catch (DuplicateKeyException e){   // 捕获唯一键冲突
             // 查询同一个 fingerprint
             Device registered = deviceMapper.findByFingerprint(request.getFingerprint());
@@ -113,6 +114,9 @@ public class DeviceService {
             throw e;
         }
 
+        if (rows != 1) {
+            throw new IllegalStateException("设备注册失败，预期插入 1 行，实际插入 " + rows + " 行。");
+        }
         // 注册成功，返回设备ID
         return new DeviceRegisterResponse(device.getDeviceId());
     }
