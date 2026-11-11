@@ -202,4 +202,20 @@ public interface DeviceMapper {
             @Param("status")
             DeviceStatus status
     );
+
+    /**
+     * 设备移动设备组
+     * 设备处于激活状态才允许移动设备组
+     */
+    @Update("""
+            update device
+            set group_id = #{groupId}
+            where device_id = #{deviceId} and status = 'ACTIVE'
+            """)
+    int removeDeviceGroup(
+            @Param("groupId")
+            String groupId,
+            @Param("deviceId")
+            String deviceId
+    );
 }
