@@ -37,4 +37,17 @@ public interface DeviceGroupMapper {
             @Param("groupName")
             String groupName
     );
+
+    /**
+     * 按设备组id查询设备
+     */
+    @Select("""
+            select id, group_name
+            from device_group
+            where id = #{id}
+            """)
+    DeviceGroup findById(
+            @Param("id")
+            Long id
+    );
 }
