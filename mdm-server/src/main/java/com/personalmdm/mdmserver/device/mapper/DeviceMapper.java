@@ -39,10 +39,10 @@ public interface DeviceMapper {
      */
     @Insert("""
             insert into device (
-                               device_id, fingerprint, device_name, model, os, os_version, status
+                               device_id, fingerprint, device_name, model, os, os_version, status, group_id
             )
             values (
-                   #{deviceId}, #{fingerprint}, #{deviceName}, #{model}, #{os}, #{osVersion}, #{status}
+                   #{deviceId}, #{fingerprint}, #{deviceName}, #{model}, #{os}, #{osVersion}, #{status}, #{groupId}
             )
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")   //
