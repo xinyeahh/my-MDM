@@ -214,7 +214,7 @@ public interface DeviceMapper {
             """)
     int updateDeviceGroup(
             @Param("groupId")
-            String groupId,
+            Long groupId,
             @Param("deviceId")
             String deviceId
     );
