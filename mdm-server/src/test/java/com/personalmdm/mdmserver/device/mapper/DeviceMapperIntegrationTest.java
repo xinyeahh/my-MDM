@@ -350,22 +350,51 @@ public class DeviceMapperIntegrationTest {
         Device revoked = createDevice("RevockedDevice", "Android");
         revoked.setStatus(DeviceStatus.REVOKED);
 
-        deviceMapper.insert(active);
-        deviceMapper.insert(revoked);
-
         DeviceGroup A = new DeviceGroup();
         A.setGroupName("组A");
         deviceGroupMapper.insert(A);
         active.setGroupId(A.getId());
         revoked.setGroupId(A.getId());
 
+        // 在设置设备组后，再将设备插入数据库
+        deviceMapper.insert(active);
+        deviceMapper.insert(revoked);
+
         DeviceGroup B = new DeviceGroup();
         B.setGroupName("组B");
+        deviceGroupMapper.insert(B);
 
+        // 确认在调用更新设备组方法之前两台设备都在组A
+        assertEquals(
+                A.getId(),  // 期望值
+                deviceMapper.findByDeviceId(active.getDeviceId())   // 同时检验设备是否成功存入数据库，并取出设备的组id
+                        .getGroupId()
+        );
+        assertEquals(
+                A.getId(),  // 期望值
+                deviceMapper.findByDeviceId(revoked.getDeviceId())   // 同时检验设备是否成功存入数据库，并取出设备的组id
+                        .getGroupId()
+        );
+
+
+        // 执行更新设备组方法
         int activeRows = deviceMapper.updateDeviceGroup(B.getId(), active.getDeviceId());
         int revockedRows = deviceMapper.updateDeviceGroup(B.getId(), revoked.getDeviceId());
 
+        // 检验更新结果
         assertEquals(1,activeRows);
         assertEquals(0, revockedRows);
+
+        // 确认激活设备移到了B，未激活设备还在原地
+        assertEquals(
+                B.getId(),  // 期望值
+                deviceMapper.findByDeviceId(active.getDeviceId())   // 同时检验设备是否成功存入数据库，并取出设备的组id
+                        .getGroupId()
+        );
+        assertEquals(
+                A.getId(),  // 期望值
+                deviceMapper.findByDeviceId(revoked.getDeviceId())   // 同时检验设备是否成功存入数据库，并取出设备的组id
+                        .getGroupId()
+        );
     }
 }
