@@ -866,5 +866,49 @@ class DeviceServiceTest {
         verify(deviceMapper).insert(any(Device.class));
     }
 
+    /**
+     * 测试设备组更新方法
+     * 前提：
+         * 第一次查询设备，返回 ACTIVE，当前在组 A。
+         * 目标组 B 存在。
+         * 条件更新返回 0。
+         * 第二次查询设备，返回 REVOKED。
+     */
+    @Test
+    void removeDeviceGroupAtFirstDeviceIsActiveButUpdateReturnZeroRecheckDeviceIsReVoked() {
+        String deviceId = "dev_test";
+        Long groupId = 1L;
+
+        Device active = new Device();
+        active.setStatus(DeviceStatus.ACTIVE);
+
+        Device revoked = new Device();
+        revoked.setStatus(DeviceStatus.REVOKED);
+
+        // 第一次查询 激活设备， 第二次查询 撤销设备
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(active, revoked);
+
+        // 更新设备组返回0
+        when(deviceMapper.updateDeviceGroup(groupId, deviceId)).thenReturn(0);
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> deviceService.moveToGroup(deviceId, groupId)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        verify(deviceMapper, times(2)).findByDeviceId(deviceId);
+        verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
+
+    }
+
 }
 
