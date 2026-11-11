@@ -14,6 +14,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -310,5 +311,60 @@ public class DeviceService {
         );
     }
 
+    /**
+     * 设备更新设备组
+     * @param deviceId  设备业务ID
+     * @param groupId   设备组ID
+     */
+    public void moveToGroup(String deviceId, Long groupId) {
+        // 1. 查设备
+        Device device = deviceMapper.findByDeviceId(deviceId);
 
+        // 2. 设备存在性校验
+        if (device == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在！");
+        }
+
+        // 3. 设备存在但是已撤销了
+        if (device.getStatus() == DeviceStatus.REVOKED) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "设备已撤销！");
+        }
+
+        // 4. 检查设备组的存在性，若不存在方法会自动抛出404
+        deviceGroupService.requireExists(groupId);
+
+        // 5. 设备存在且激活，设备组存在
+        int rows = deviceMapper.updateDeviceGroup(groupId, deviceId);
+
+        // 设备组更新成功
+        if (rows == 1) return;
+
+        // 影响行数为 0，重查后判断原因（可能更新成功）
+        if (rows == 0) {
+            // 设备最新状态
+            Device latest = deviceMapper.findByDeviceId(deviceId);
+
+            // 设备不存在
+            if (latest == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在！");
+            }
+
+            // 设备存在，但是已撤销
+            if (latest.getStatus() == DeviceStatus.REVOKED) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "设备已撤销！");
+            }
+
+            /**
+             * 设备存在，并且处于激活状态，并且已经位于目标组
+             * （主要是针对更新语句返回行数的处理）
+             * 注意此处的比较不要使用“==”，而是使用equals，因为设备当前的groupId可能是null
+             * 而这里的组 ID 是 Long 对象，用 == 比较两个 Long 时，判断的是它们是否指向同一个对象。
+             * equals 用于比较数值，`Objects.equals` 还负责安全处理 null
+             * */
+            if (Objects.equals(latest.getGroupId(), groupId)) return;
+        }
+
+        // 其他未预期的结果
+        throw new IllegalStateException("设备 " + deviceId + " 设备组更新失败，影响行数为 " + rows);
+    }
 }
