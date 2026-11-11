@@ -3,6 +3,8 @@ package com.personalmdm.mdmserver.device.mapper;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.service.DeviceService;
+import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
+import com.personalmdm.mdmserver.devicegroup.mapper.DeviceGroupMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +27,9 @@ public class DeviceMapperIntegrationTest {
 
     @Autowired
     private DeviceMapper deviceMapper;
+
+    @Autowired
+    private DeviceGroupMapper deviceGroupMapper;
 
     /**
      * 提取测试数据的创建方法
@@ -331,5 +336,36 @@ public class DeviceMapperIntegrationTest {
                                 device.getStatus() == DeviceStatus.REVOKED  // 判断这台设备的状态是否是REVOKED
                         )
         );
+    }
+
+    /**
+     * 测试：
+     * 激活状态设备组移动成功，设备组更新语句返回行数1
+     * 撤销状态设备组移动失败，设备组更新语句返回行数0
+     */
+    @Test
+    @Transactional
+    void testUpdateDeviceGroupFunctionAvailable() {
+        Device active = createDevice("ActiveDevice", "Android");
+        Device revoked = createDevice("RevockedDevice", "Android");
+        revoked.setStatus(DeviceStatus.REVOKED);
+
+        deviceMapper.insert(active);
+        deviceMapper.insert(revoked);
+
+        DeviceGroup A = new DeviceGroup();
+        A.setGroupName("组A");
+        deviceGroupMapper.insert(A);
+        active.setGroupId(A.getId());
+        revoked.setGroupId(A.getId());
+
+        DeviceGroup B = new DeviceGroup();
+        B.setGroupName("组B");
+
+        int activeRows = deviceMapper.updateDeviceGroup(B.getId(), active.getDeviceId());
+        int revockedRows = deviceMapper.updateDeviceGroup(B.getId(), revoked.getDeviceId());
+
+        assertEquals(1,activeRows);
+        assertEquals(0, revockedRows);
     }
 }

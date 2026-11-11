@@ -214,8 +214,8 @@ public interface DeviceMapper {
             """)
     int updateDeviceGroup(
             @Param("groupId")
-            Long groupId,
+            Long groupId,   // 新设备组内部id
             @Param("deviceId")
-            String deviceId
+            String deviceId // 要更新设备组的设备业务id
     );
 }
