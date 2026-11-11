@@ -59,4 +59,15 @@ public class DeviceGroupService {
         // 创建成功，返回创建设备组响应DTO
         return new DeviceGroupCreateResponse(deviceGroup.getId(), deviceGroup.getGroupName());
     }
+
+    /**
+     * 主要提供目标组存在性检查,服务于设备变更设备组
+     * @param groupId   设备组内部id
+     */
+    public void requireExists(Long groupId) {
+        DeviceGroup group = deviceGroupMapper.findById(groupId);
+        if (group == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "目标设备组不存在！");
+        }
+    }
 }
