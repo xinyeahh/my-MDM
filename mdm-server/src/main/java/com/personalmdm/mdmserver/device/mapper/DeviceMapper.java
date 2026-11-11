@@ -212,7 +212,7 @@ public interface DeviceMapper {
             set group_id = #{groupId}
             where device_id = #{deviceId} and status = 'ACTIVE'
             """)
-    int removeDeviceGroup(
+    int updateDeviceGroup(
             @Param("groupId")
             String groupId,
             @Param("deviceId")
