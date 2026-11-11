@@ -4,6 +4,7 @@ import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
+import com.personalmdm.mdmserver.devicegroup.service.DeviceGroupService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class DeviceService {
     private final DeviceMapper deviceMapper;
     private final DeviceConnectionCalculator deviceConnectionCalculator;
     private Clock clock;    // 注入 Java 自带的 Clock，让应用使用真实时间，测试使用固定时间
-
+    private final DeviceGroupService deviceGroupService;
     /**
      * 构造方法
      * 构造器注入：Spring 创建 DeviceService 时，把 MyBatis 提供的 DeviceMapper 对象传进来。只有一个构造方法时，无须写 @Autowired。
@@ -39,11 +40,13 @@ public class DeviceService {
     public DeviceService(
             DeviceMapper deviceMapper,
             DeviceConnectionCalculator deviceConnectionCalculator,
-            Clock clock
+            Clock clock,
+            DeviceGroupService deviceGroupService
     ){
         this.deviceMapper = deviceMapper;
         this.deviceConnectionCalculator = deviceConnectionCalculator;
         this.clock = clock;
+        this.deviceGroupService = deviceGroupService;
     }
 
 
@@ -306,4 +309,6 @@ public class DeviceService {
                 "设备状态已变化，请重试"
         );
     }
+
+
 }
