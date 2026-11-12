@@ -261,10 +261,29 @@ public class DeviceService {
         // 根据更新语句返回的匹配结果判定是否更新成功
         int row = deviceMapper.revoke(deviceId);
 
-        // 设备不存在时，更新语句匹配结果为0
-        if(row == 0){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在");
+        // 撤销成功
+        if (row == 1){
+            // 设备状态变更历史记录
+            return;
         }
+
+        // 撤销语句返回0的时候，排查原因
+        if(row == 0){
+            Device existing = deviceMapper.findByDeviceId(deviceId);
+
+            // 1. 查不到设备，抛出404
+            if (existing == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在！");
+            }
+
+            // 2. 已经是撤销状态，正常结束，不新增历史
+            if (existing.getStatus() == DeviceStatus.REVOKED) {
+                return;
+            }
+        }
+
+        // 原因排查失败，撤销结果异常
+        throw new IllegalStateException("设备撤销结果异常，影响行数为 " + row);
     }
 
     /**
