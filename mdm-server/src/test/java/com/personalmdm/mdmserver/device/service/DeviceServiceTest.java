@@ -1062,5 +1062,38 @@ class DeviceServiceTest {
        verify(deviceGroupService).requireExists(groupId);
     }
 
+    /**
+     * 设备组更新
+     * 测试情况：更新返回0，重查设备是激活状态但是组id是2000L
+     */
+    @Test
+    void moveToGroupFailedButCannotFindTheReason() {
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+        device.setGroupId(Long.valueOf("2000"));
+
+        Long targetGroup = 1000L;
+        String deviceId = "dev_exist";
+
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device, device);
+        when(deviceMapper.updateDeviceGroup(targetGroup, deviceId)).thenReturn(0);
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        // assertThrows断言有IllegalStateException.class异常抛出
+        assertThrows(
+                IllegalStateException.class,
+                () -> deviceService.moveToGroup(deviceId, targetGroup)
+        );
+
+        verify(deviceMapper, times(2)).findByDeviceId(deviceId);
+        verify(deviceMapper).updateDeviceGroup(targetGroup, deviceId);
+        verify(deviceGroupService).requireExists(targetGroup);
+    }
 }
 
