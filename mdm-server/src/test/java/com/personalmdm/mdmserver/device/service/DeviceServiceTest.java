@@ -1140,5 +1140,51 @@ class DeviceServiceTest {
         verify(deviceGroupService, times(2)).requireExists(groupId);
         verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
     }
+
+    /**
+     * 设备组更新
+     * 测试场景：更新抛出异常，但目标组仍然存在，继续抛出原异常
+     */
+    @Test
+    void moveToGroupRethrowsIntegrityViolationWhenTargetGroupStillExists() {
+        // 设备存在且激活
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        // 设备ID
+        String deviceId = "dev_test";
+        // 设备组ID
+        Long groupId = 1000L;
+
+        // 保存异常对象
+        DataIntegrityViolationException original = new DataIntegrityViolationException("数据完整性约束失败！");
+
+        // 预设：更新前检查设备存在性与状态
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device);
+
+        // 预设：设备组存在性检查，都要通过，mock默认自动通过
+
+        // 预设：执行设备组更新时抛出更新异常
+        when(deviceMapper.updateDeviceGroup(groupId, deviceId)).thenThrow(original);
+
+        // 构造service
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        // 执行
+        DataIntegrityViolationException actual = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> deviceService.moveToGroup(deviceId, groupId)
+        );
+
+        assertSame(original, actual);
+        verify(deviceMapper).findByDeviceId(deviceId);
+        verify(deviceGroupService, times(2)).requireExists(groupId);
+        verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
+    }
 }
 
