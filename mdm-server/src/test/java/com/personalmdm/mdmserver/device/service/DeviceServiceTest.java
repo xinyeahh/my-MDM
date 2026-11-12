@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -1094,6 +1095,50 @@ class DeviceServiceTest {
         verify(deviceMapper, times(2)).findByDeviceId(deviceId);
         verify(deviceMapper).updateDeviceGroup(targetGroup, deviceId);
         verify(deviceGroupService).requireExists(targetGroup);
+    }
+
+    /**
+     * 设备组更新
+     * 测试场景：更新设备组语句执行的前一刻设备组被删除了，返回404
+     */
+    @Test
+    void moveToGroupReturns404WhenTargetGroupDisappearsDuringUpdate() {
+        String deviceId = "dev_exist";
+        Long groupId = 1000L;
+        // 更新前检查设备组存在
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        // 设备存在且激活预设，保证更新前检查可通过
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device);
+        // 更新方法抛出异常
+        when(deviceMapper.updateDeviceGroup(groupId, deviceId))
+                .thenThrow(
+                        new DataIntegrityViolationException("外键约束失败!")
+                );
+        // 检查设备组存在性: 预设结果前置写法，第一次通过，第二次抛出异常
+        doNothing()
+                .doThrow(
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "目标设备组不存在！")
+                )
+                .when(deviceGroupService).requireExists(groupId);
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> deviceService.moveToGroup(deviceId, groupId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        verify(deviceMapper).findByDeviceId(deviceId);
+        verify(deviceGroupService, times(2)).requireExists(groupId);
+        verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
     }
 }
 
