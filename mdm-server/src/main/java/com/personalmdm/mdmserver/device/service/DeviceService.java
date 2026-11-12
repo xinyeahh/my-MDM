@@ -4,7 +4,9 @@ import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
+import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
 import com.personalmdm.mdmserver.devicegroup.service.DeviceGroupService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -334,7 +336,16 @@ public class DeviceService {
         deviceGroupService.requireExists(groupId);
 
         // 5. 设备存在且激活，设备组存在
-        int rows = deviceMapper.updateDeviceGroup(groupId, deviceId);
+        int rows;
+        try {
+            rows = deviceMapper.updateDeviceGroup(groupId, deviceId);
+        }catch (DataIntegrityViolationException exception) {
+            // 检查目标组，目标组不存在返回404，目标组存在重新抛出原异常
+            deviceGroupService.requireExists(groupId);
+            // 异常继续抛出去，供排查
+            throw exception;
+        }
+
 
         // 设备组更新成功
         if (rows == 1) return;
