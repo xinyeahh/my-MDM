@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
@@ -261,6 +262,7 @@ public class DeviceService {
      * 状态转换：激活->撤销
      * @param deviceId 设备ID
      */
+    @Transactional  // 声明事务，若历史插入失败同步撤销状态更新操作
     public void revoke(String deviceId){
 
         // 根据更新语句返回的匹配结果判定是否更新成功
@@ -269,6 +271,17 @@ public class DeviceService {
         // 撤销成功
         if (row == 1){
             // 设备状态变更历史记录
+            DeviceStatusHistory history = new DeviceStatusHistory();
+            history.setDeviceId(deviceId);
+            history.setFromStatus(DeviceStatus.ACTIVE);
+            history.setToStatus(DeviceStatus.REVOKED);
+            history.setOccurredAt(LocalDateTime.now(clock));
+
+            int historyRows = deviceStatusHistoryMapper.insert(history);
+            if (historyRows != 1) {
+                throw new IllegalStateException("设备状态历史写入失败");
+            }
+
             return;
         }
 
