@@ -45,7 +45,7 @@ public interface DeviceMapper {
                    #{deviceId}, #{fingerprint}, #{deviceName}, #{model}, #{os}, #{osVersion}, #{status}, #{groupId}
             )
             """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")   //
+    @Options(useGeneratedKeys = true, keyProperty = "id")   // 主键回填
     int insert(Device device);
 
     /**
@@ -122,7 +122,7 @@ public interface DeviceMapper {
     @Update("""
             update device
             set status = 'REVOKED'
-            where device_id = #{deviceId}
+            where device_id = #{deviceId} and status = 'ACTIVE'
             """)
     int revoke(
             @Param("deviceId")
