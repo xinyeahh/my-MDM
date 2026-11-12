@@ -126,4 +126,20 @@ public class DeviceController {
         deviceService.heartbeat(deviceId);
     }
 
+    /**
+     * 设备更新设备组
+     * @param deviceId
+     * @param request
+     */
+    @PostMapping("/{deviceId}/move-to-group")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void moveToGroup(
+            @PathVariable("deviceId")
+            String deviceId,
+            @Valid
+            @RequestBody
+            DeviceMoveGroupRequest request
+    ){
+        deviceService.moveToGroup(deviceId, request.groupId());
+    }
 }
