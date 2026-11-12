@@ -6,6 +6,8 @@ import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
+import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
+import com.personalmdm.mdmserver.devicegroup.mapper.DeviceGroupMapper;
 import com.personalmdm.mdmserver.devicegroup.service.DeviceGroupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +53,8 @@ class DeviceServiceTest {
     private DeviceMapper deviceMapper;
     @Mock
     private DeviceGroupService deviceGroupService;
+//    @Mock
+//    private DeviceGroupMapper deviceGroupMapper;
 
     /**
      * 注册
@@ -908,6 +912,154 @@ class DeviceServiceTest {
         verify(deviceMapper, times(2)).findByDeviceId(deviceId);
         verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
 
+    }
+
+    /**
+     * 设备组更新
+     * 测试场景：更新返回0，但查重发现设备已经在目标组，正常结束
+     * 注意：
+        * `deviceGroupService` 是 @Mock。 它的 requireExists() 默认正常结束，不会执行真实方法，也就不会调用 deviceGroupMapper。
+     */
+    @Test
+    void moveToGroupSucceedsWhenUpdateReturnsZeroAndAlreadyInTargetGroup() {
+        String deviceId = "dev_test";
+        Long groupId = 1000L;
+
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+
+//        DeviceGroup group = new DeviceGroup();
+//        group.setId(groupId);
+
+        Device latest = new Device();
+        latest.setStatus(DeviceStatus.ACTIVE);
+//        latest.setGroupId(groupId); 复用同一个Long对象引用，指向同一个对象，但是我们的设计目标是两个不同的Long对象，值相同，所以此处要改为独立取得同值的Long
+        latest.setGroupId(Long.valueOf("1000"));
+
+
+
+        // 更新返回0
+        when(deviceMapper.updateDeviceGroup(groupId, deviceId)).thenReturn(0);
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device, latest);
+//        when(deviceGroupMapper.findById(groupId)).thenReturn(group);
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        assertDoesNotThrow(
+                () -> deviceService.moveToGroup(deviceId, groupId)
+        );
+
+
+        verify(deviceMapper, times(2)).findByDeviceId(deviceId);
+        verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
+//        verify(deviceGroupMapper).findById(groupId);
+        // 验证service的协作
+        verify(deviceGroupService).requireExists(groupId);
+    }
+
+    /**
+     * 设备组更新
+     * 测试场景：第一次查询就返回“已撤销“状态，预期抛出403
+     */
+    @Test
+    void moveToGroupFailedBecauseRevokedStatusWhenFirstCheck() {
+        Device revoked = new Device();
+        revoked.setStatus(DeviceStatus.REVOKED);
+
+        when(deviceMapper.findByDeviceId("dev_revoked")).thenReturn(revoked);
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> deviceService.moveToGroup("dev_revoked", Long.valueOf("1000"))
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+
+        // 验证mapper的执行。当第一次就返回已撤销时，本次moveTpGroup调用只会执行一次设备业务ID的查询，剩下的查询不会做，不会做的部分也要验证
+        verify(deviceMapper).findByDeviceId("dev_revoked");
+
+        // 改成 any() 后，可以验证任何参数的分组更新都没有发生。
+        verify(deviceMapper, never()).updateDeviceGroup(any(), any());
+        verifyNoInteractions(deviceGroupService);
+    }
+
+    /**
+     * 设备组更新
+     * 测试场景：目标组不存在
+     */
+    @Test
+    void moveToGroupFailedBecauseTargetGroupIsNotFound() {
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        when(deviceMapper.findByDeviceId("dev_active")).thenReturn(device);
+
+        doThrow(
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "目标设备组不存在！")
+        ).when(deviceGroupService).requireExists(Long.valueOf("1000"));
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> deviceService.moveToGroup("dev_active", Long.valueOf("1000"))
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        verify(deviceMapper).findByDeviceId("dev_active");
+        verify(deviceMapper, never()).updateDeviceGroup(any(), any());
+        verify(deviceGroupService).requireExists(Long.valueOf("1000"));
+    }
+
+
+    /**
+     * 设备组更新
+     * 测试场景：正常更新
+     */
+    @Test
+    void moveToGroupSucceed() {
+        String deviceId = "dev_active";
+        Long groupId = 1000L;
+        Device device = new Device();
+        device.setStatus(DeviceStatus.ACTIVE);
+
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device);
+//        只返回 1，不会执行 SQL，也不会给 device 调用 setGroupId()
+        when(deviceMapper.updateDeviceGroup(groupId, deviceId)).thenReturn(1);
+
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService
+        );
+
+        // 成功执行没有抛出异常
+        assertDoesNotThrow(
+                () -> deviceService.moveToGroup(deviceId, groupId)
+        );
+
+       verify(deviceMapper).findByDeviceId(deviceId);
+       verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
+       verify(deviceGroupService).requireExists(groupId);
     }
 
 }
