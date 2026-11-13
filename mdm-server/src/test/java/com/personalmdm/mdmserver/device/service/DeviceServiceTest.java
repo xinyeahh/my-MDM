@@ -5,6 +5,7 @@ package com.personalmdm.mdmserver.device.service;
 import com.personalmdm.mdmserver.device.dto.*;
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
+import com.personalmdm.mdmserver.device.entity.DeviceStatusHistory;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import com.personalmdm.mdmserver.device.mapper.DeviceStatusHistoryMapper;
 import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
@@ -1215,6 +1216,62 @@ class DeviceServiceTest {
         verify(deviceMapper).findByDeviceId(deviceId);
         verify(deviceGroupService, times(2)).requireExists(groupId);
         verify(deviceMapper).updateDeviceGroup(groupId, deviceId);
+    }
+
+
+    /**
+     * 设备撤销 接入设备状态变更历史记录
+     * 测试场景：成功撤销的时候，历史内容是否正确
+     */
+    @Test
+    void revokeCreatesStatusHistoryWhenStateChanges() {
+        // 固定始终
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-11-13T02:00:00Z"),
+                ZoneId.of("Asia/Shanghai")
+        );
+
+        String deviceId = "dev_test";
+
+        // ===== 设置 Mock 被调用的时候返回什么 =====
+        // 撤销返回1, 撤销成功
+        when(deviceMapper.revoke(deviceId)).thenReturn(1);
+
+        // 历史插入返回1，历史记录插入成功
+        when(deviceStatusHistoryMapper.insert(any(DeviceStatusHistory.class))).thenReturn(1);
+
+        // 构造service
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                clock,
+                deviceGroupService,
+                deviceStatusHistoryMapper
+        );
+
+        deviceService.revoke(deviceId);
+
+        /**
+         * 检查Service创建的历史对象
+         * 用ArgumentCaptor来捕获传给Mapper的参数
+         * 先调用service方法，再执行捕获和断言
+         */
+        ArgumentCaptor<DeviceStatusHistory> captor = ArgumentCaptor.forClass(DeviceStatusHistory.class);
+
+        // ===== 检查方法是否被调用 =====
+        verify(deviceStatusHistoryMapper).insert(
+                // 捕获那次调用传入的参数
+                captor.capture()
+        );
+        DeviceStatusHistory history = captor.getValue();    // 取出参数对象，供断言检查
+
+        assertEquals(deviceId, history.getDeviceId());
+        assertEquals(DeviceStatus.ACTIVE, history.getFromStatus());
+        assertEquals(DeviceStatus.REVOKED, history.getToStatus());
+        assertEquals(
+                LocalDateTime.of(2026, 11, 13, 10, 0),
+                history.getOccurredAt()
+        );
     }
 }
 
