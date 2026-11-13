@@ -1296,7 +1296,12 @@ class DeviceServiceTest {
         // 排查更新返回0的原因时，发现设备已经处于撤销状态,因此此处预设返回一个状态为撤销的设备
         when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device);
 
-        // 构造Service
+        /**
+         * 构造Service
+         * 把 Mapper 都设为 Mock，调用时没有真实数据库更新，也没有 Spring 事务代理。
+         * 无法验证已经写入数据库的数据被回滚
+         */
+
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
                 new DeviceConnectionCalculator(),
