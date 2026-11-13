@@ -441,6 +441,7 @@ class DeviceServiceTest {
 
         // 4. 验证 Mapper 收到正确的设备 ID
         verify(deviceMapper).revoke("dev_existing");
+        verify(deviceStatusHistoryMapper).insert(any(DeviceStatusHistory.class));
     }
 
     /**
