@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * @RestController：将类声明为处理 HTTP 请求的控制器，返回对象会被序列化为响应数据
  * @RequestMapping("/device")：设置这个控制器的公共路径
@@ -141,5 +143,18 @@ public class DeviceController {
             DeviceMoveGroupRequest request
     ){
         deviceService.moveToGroup(deviceId, request.groupId());
+    }
+
+    /**
+     * 依据设备业务ID查询设备的状态变更历史记录
+     * @param deviceId 设备业务ID
+     * @return         设备状态变更历史响应列表
+     */
+    @GetMapping("/{deviceId}/status-history")
+    public List<DeviceStatusHistoryResponse> listStatusHistory(
+            @PathVariable("deviceId")
+            String deviceId
+    ){
+        return deviceService.listStatusHistory(deviceId);
     }
 }
