@@ -415,4 +415,36 @@ public class DeviceService {
         // 其他未预期的结果
         throw new IllegalStateException("设备 " + deviceId + " 设备组更新失败，影响行数为 " + rows);
     }
+
+    /**
+     * 查询设备状态变更历史列表
+     * @param deviceId  设备业务ID
+     * @return          设备状态变更历史响应列表
+     */
+    public List<DeviceStatusHistoryResponse> listStatusHistory(String deviceId) {
+        // 1. 检查设备是否存在
+        Device exist = deviceMapper.findByDeviceId(deviceId);
+
+        // 设备不存在抛出404
+        if (exist == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "设备不存在！");
+        }
+
+        List<DeviceStatusHistory> histories = deviceStatusHistoryMapper.findByDeviceId(deviceId);
+
+        List<DeviceStatusHistoryResponse> responses = new ArrayList<>();
+
+        for (DeviceStatusHistory history : histories) {
+            responses.add(
+                    new DeviceStatusHistoryResponse(
+                            history.getId(),
+                            history.getFromStatus(),
+                            history.getToStatus(),
+                            history.getOccurredAt()
+                    )
+            );
+        }
+
+        return responses;
+    }
 }
