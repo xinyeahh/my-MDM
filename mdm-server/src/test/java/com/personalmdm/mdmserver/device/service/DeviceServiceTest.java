@@ -422,9 +422,11 @@ class DeviceServiceTest {
      */
     @Test
     void revokingExistingDeviceSucceeds() {
+
         // 1. 模拟 revoke("dev_existing") 返回 1
         when(deviceMapper.revoke("dev_existing")).thenReturn(1);
-
+        // 补充：历史插入成功的 Mock 设置
+        when(deviceStatusHistoryMapper.insert(any(DeviceStatusHistory.class))).thenReturn(1);
         // 2. 创建 Service
         DeviceService deviceService = new DeviceService(
                 deviceMapper,
@@ -1272,6 +1274,45 @@ class DeviceServiceTest {
                 LocalDateTime.of(2026, 11, 13, 10, 0),
                 history.getOccurredAt()
         );
+    }
+
+    /**
+     * 设备撤销 接入设备状态变更历史记录
+     * 测试场景：重复撤销不新增历史
+     */
+    @Test
+    void revokeDoesNotCreateHistoryWhenAlreadyRevoked() {
+        // 目标设备业务ID
+        String deviceId = "dev_test";
+
+        // 已存在的撤销设备
+        Device device = new Device();
+        device.setStatus(DeviceStatus.REVOKED);
+
+        // 设备现已处于已撤销的状态，更新返回0
+        when(deviceMapper.revoke(deviceId)).thenReturn(0);
+
+        // 排查更新返回0的原因时，发现设备已经处于撤销状态,因此此处预设返回一个状态为撤销的设备
+        when(deviceMapper.findByDeviceId(deviceId)).thenReturn(device);
+
+        // 构造Service
+        DeviceService deviceService = new DeviceService(
+                deviceMapper,
+                new DeviceConnectionCalculator(),
+                Clock.systemDefaultZone(),
+                deviceGroupService,
+                deviceStatusHistoryMapper
+        );
+
+        // 调用执行，预期不抛出任何错误
+        assertDoesNotThrow(
+                () -> deviceService.revoke(deviceId)
+        );
+
+        verify(deviceMapper).revoke(deviceId);
+        verify(deviceMapper).findByDeviceId(deviceId);
+        verifyNoInteractions(deviceStatusHistoryMapper);
+
     }
 }
 
