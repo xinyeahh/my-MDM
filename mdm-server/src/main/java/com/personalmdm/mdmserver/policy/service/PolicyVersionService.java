@@ -1,12 +1,31 @@
 package com.personalmdm.mdmserver.policy.service;
 
+import com.personalmdm.mdmserver.policy.mapper.PolicyMapper;
+import com.personalmdm.mdmserver.policy.mapper.PolicyVersionMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
-import javax.net.ssl.HttpsURLConnection;
 
+@Service
 public class PolicyVersionService {
+    // 声明依赖
+    private final PolicyMapper policyMapper;
+    private final PolicyVersionMapper policyVersionMapper;
+    private final ObjectMapper objectMapper;
+
+    // 构造器注入依赖
+    public PolicyVersionService(
+            PolicyMapper policyMapper,
+            PolicyVersionMapper policyVersionMapper,
+            ObjectMapper objectMapper
+    ){
+        this.policyMapper = policyMapper;
+        this.policyVersionMapper = policyVersionMapper;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * 校验密码配置
@@ -46,4 +65,6 @@ public class PolicyVersionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minLength 必须时有效整数");
         }
     }
+
+
 }
