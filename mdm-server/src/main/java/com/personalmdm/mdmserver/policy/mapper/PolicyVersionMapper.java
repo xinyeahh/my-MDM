@@ -7,21 +7,19 @@ import org.apache.ibatis.annotations.*;
 public interface PolicyVersionMapper {
 
     /**
-     * 查询最新策略版本号
-     * 利用 降序+数量限制
-     * FOR UPDATE 表示查询的时候取得排他锁，持有到事务结束
-     * @param policyId
-     * @return 最新版本号；尚无版本时返回 null
+     * 查询最新策略版本，并加锁
+     * @param policyId 所属策略 ID
+     * @return 最新策略版本；尚无版本时返回 null
      */
     @Select("""
-            select version_no
+            select id, policy_id, version_no, config, create_time
             from policy_version
             where policy_id = #{policyId}
             order by version_no desc
             limit 1
             for update 
             """)
-    Integer findLatestVersionNoForUpdate (
+    PolicyVersion findLatestForUpdate (
         @Param("policyId")
         Long policyId
     );
