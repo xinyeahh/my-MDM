@@ -8,9 +8,6 @@ import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.entity.DeviceStatusHistory;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import com.personalmdm.mdmserver.device.mapper.DeviceStatusHistoryMapper;
-import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
-import com.personalmdm.mdmserver.devicegroup.mapper.DeviceGroupMapper;
-import com.personalmdm.mdmserver.devicegroup.service.DeviceGroupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -55,7 +52,7 @@ class DeviceServiceTest {
     @Mock   // 创建模拟的 DeviceMapper 对象，而非连接数据库的真实Mapper
     private DeviceMapper deviceMapper;
     @Mock
-    private DeviceGroupService deviceGroupService;
+    private DeviceConnectionStatus.DeviceGroupService deviceGroupService;
     @Mock
     private DeviceStatusHistoryMapper deviceStatusHistoryMapper;
 

@@ -1,4 +1,4 @@
-package com.personalmdm.mdmserver.devicegroup.entity;
+package com.personalmdm.mdmserver.device.entity;
 
 public class DeviceGroup {
     // 设备组id，由mysql生成

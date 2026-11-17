@@ -1,4 +1,4 @@
-package com.personalmdm.mdmserver.devicegroup.dto;
+package com.personalmdm.mdmserver.device.dto;
 
 /**
  * 创建设备组响应 DTO

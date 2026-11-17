@@ -2,9 +2,7 @@ package com.personalmdm.mdmserver.device.mapper;
 
 import com.personalmdm.mdmserver.device.entity.Device;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
-import com.personalmdm.mdmserver.device.service.DeviceService;
-import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
-import com.personalmdm.mdmserver.devicegroup.mapper.DeviceGroupMapper;
+import com.personalmdm.mdmserver.device.entity.DeviceGroup;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +27,7 @@ public class DeviceMapperIntegrationTest {
     private DeviceMapper deviceMapper;
 
     @Autowired
-    private DeviceGroupMapper deviceGroupMapper;
+    private DeviceMapper.DeviceGroupMapper deviceGroupMapper;
 
     /**
      * 提取测试数据的创建方法

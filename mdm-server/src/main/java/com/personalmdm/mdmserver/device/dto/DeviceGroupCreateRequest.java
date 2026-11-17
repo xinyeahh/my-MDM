@@ -1,4 +1,4 @@
-package com.personalmdm.mdmserver.devicegroup.dto;
+package com.personalmdm.mdmserver.device.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

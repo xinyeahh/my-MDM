@@ -1,8 +1,8 @@
-package com.personalmdm.mdmserver.devicegroup.controller;
+package com.personalmdm.mdmserver.device.controller;
 
-import com.personalmdm.mdmserver.devicegroup.dto.DeviceGroupCreateRequest;
-import com.personalmdm.mdmserver.devicegroup.dto.DeviceGroupCreateResponse;
-import com.personalmdm.mdmserver.devicegroup.service.DeviceGroupService;
+import com.personalmdm.mdmserver.device.dto.DeviceGroupCreateRequest;
+import com.personalmdm.mdmserver.device.dto.DeviceGroupCreateResponse;
+import com.personalmdm.mdmserver.device.service.DeviceConnectionStatus;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/device-group")
 public class DeviceGroupController {
     // 声明依赖
-    private final DeviceGroupService deviceGroupService;
+    private final DeviceConnectionStatus.DeviceGroupService deviceGroupService;
 
     // 构造注入
-    public DeviceGroupController(DeviceGroupService deviceGroupService){
+    public DeviceGroupController(DeviceConnectionStatus.DeviceGroupService deviceGroupService){
         this.deviceGroupService = deviceGroupService;
     }
 

@@ -1,7 +1,7 @@
 package com.personalmdm.mdmserver.device.mapper;
 
-import com.personalmdm.mdmserver.device.dto.DeviceListItemResponse;
 import com.personalmdm.mdmserver.device.entity.Device;
+import com.personalmdm.mdmserver.device.entity.DeviceGroup;
 import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import org.apache.ibatis.annotations.*;
 
@@ -218,4 +218,53 @@ public interface DeviceMapper {
             @Param("deviceId")
             String deviceId // 要更新设备组的设备业务id
     );
+
+    @Mapper
+    interface DeviceGroupMapper {
+
+        /**
+         * 创建设备组
+         * @param group 插入设备组
+         * @return
+         */
+        @Insert("""
+                insert into device_group (group_name)
+                values (#{groupName})
+                """)
+        // 让 myBatis 将数据库生成的主键写回 device.id
+        @Options(
+
+                useGeneratedKeys = true,
+                keyProperty = "id"
+        )
+        int insert(DeviceGroup group);
+
+        /**
+         * 设备组名称是否已存在检查
+         * @param groupName
+         * @return
+         */
+        @Select("""
+                select id, group_name
+                from device_group
+                where group_name = #{groupName}
+                """)
+        DeviceGroup findByGroupName(
+                @Param("groupName")
+                String groupName
+        );
+
+        /**
+         * 按设备组id查询设备
+         */
+        @Select("""
+                select id, group_name
+                from device_group
+                where id = #{id}
+                """)
+        DeviceGroup findById(
+                @Param("id")
+                Long id
+        );
+    }
 }

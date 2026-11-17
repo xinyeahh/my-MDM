@@ -6,8 +6,6 @@ import com.personalmdm.mdmserver.device.entity.DeviceStatus;
 import com.personalmdm.mdmserver.device.entity.DeviceStatusHistory;
 import com.personalmdm.mdmserver.device.mapper.DeviceMapper;
 import com.personalmdm.mdmserver.device.mapper.DeviceStatusHistoryMapper;
-import com.personalmdm.mdmserver.devicegroup.entity.DeviceGroup;
-import com.personalmdm.mdmserver.devicegroup.service.DeviceGroupService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -35,7 +33,7 @@ public class DeviceService {
     private final DeviceMapper deviceMapper;
     private final DeviceConnectionCalculator deviceConnectionCalculator;
     private Clock clock;    // 注入 Java 自带的 Clock，让应用使用真实时间，测试使用固定时间
-    private final DeviceGroupService deviceGroupService;
+    private final DeviceConnectionStatus.DeviceGroupService deviceGroupService;
     private final DeviceStatusHistoryMapper deviceStatusHistoryMapper;
     /**
      * 构造方法
@@ -48,7 +46,7 @@ public class DeviceService {
             DeviceMapper deviceMapper,
             DeviceConnectionCalculator deviceConnectionCalculator,
             Clock clock,
-            DeviceGroupService deviceGroupService,
+            DeviceConnectionStatus.DeviceGroupService deviceGroupService,
             DeviceStatusHistoryMapper deviceStatusHistoryMapper
     ){
         this.deviceMapper = deviceMapper;
