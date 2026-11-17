@@ -1,8 +1,7 @@
 package com.personalmdm.mdmserver.policy.mapper;
 
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import com.personalmdm.mdmserver.policy.entity.PolicyVersion;
+import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface PolicyVersionMapper {
@@ -12,7 +11,7 @@ public interface PolicyVersionMapper {
      * 利用 降序+数量限制
      * FOR UPDATE 表示查询的时候取得排他锁，持有到事务结束
      * @param policyId
-     * @return
+     * @return 最新版本号；尚无版本时返回 null
      */
     @Select("""
             select version_no
@@ -26,4 +25,16 @@ public interface PolicyVersionMapper {
         @Param("policyId")
         Long policyId
     );
+
+    /**
+     * 插入策略版本
+     * @param version 策略版本
+     * @return
+     */
+    @Insert("""
+            insert into policy_version (policy_id, version_no, config) 
+            values (#{policyId}, #{versionNo}, #{config})
+            """)
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int insert(PolicyVersion version);
 }
