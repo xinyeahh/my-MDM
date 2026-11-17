@@ -29,7 +29,7 @@ public interface PolicyVersionMapper {
     /**
      * 插入策略版本
      * @param version 策略版本
-     * @return
+     * @return        插入影响行数
      */
     @Insert("""
             insert into policy_version (policy_id, version_no, config) 
